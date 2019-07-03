@@ -1,0 +1,1831 @@
+#+STARTUP: contents
+* Lib
+#+BEGIN_SRC emacs-lisp
+(defmacro tmacs--with-visual-selection (selection-symbol &rest body)
+  "Bind SELECTION-SYMBOL into visual selection and execute BODY."
+  (declare (indent 1))
+  `(let ((,(intern (format "%s"
+			   selection-symbol))
+	  (and (use-region-p)
+	       (buffer-substring (region-beginning)
+				 (region-end)))))
+     (evil-exit-visual-state)
+     ,@body))
+
+(defun tmacs--run-shell-async (cmd &optional id)
+  "Run CMD shell command async in buffer ID."
+  (start-process-shell-command (or id 
+                                   (make-temp-name "shell-"))
+                               nil 
+                               cmd))
+
+;; (message "unstaged = %s" (magit-anything-unstaged-p))
+
+;; (tmacs--run-shell-async "ddccontrol -r 0x10 -w 0 dev:/dev/i2c-1" "ddccontrol")
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+(use-package hydra)
+(use-package major-mode-hydra)
+(use-package s)
+(use-package dash)
+#+END_SRC
+* Key Bindings
+** =general=
+#+BEGIN_SRC emacs-lisp
+(use-package general
+  :demand
+  :preface
+  (defconst tmacs-leader "SPC")
+  (defconst tmacs-leader-global "M-SPC")
+  (defconst tmacs-leader-non-normal "M-SPC")
+  (defconst tmacs-leader-local ",")
+  (defconst tmacs-leader-local-non-normal "C-,")
+  :init
+  (general-evil-setup)
+  (defalias 'tmacs-bind 'general-define-key)
+  (general-create-definer tmacs-bind-leader
+    :prefix tmacs-leader
+    :global-prefix tmacs-leader-global
+    :keymaps '(normal motion override exwm-mode-map)
+    :states '(insert normal motion))
+  (general-create-definer tmacs-bind-leader-local
+    :prefix tmacs-leader-local
+    :non-normal-prefix tmacs-leader-local-non-normal
+    :keymaps '(normal motion)
+    :states '(insert normal motion))
+  ;; compat to legacy
+  (defalias 'tmacs/bind 'tmacs-bind)
+  (defalias 'tmacs/bind-leader 'tmacs-bind-leader)
+  (defalias 'tmacs/bind-leader-local 'tmacs-bind-leader-local)
+  ;; (tmacs-bind tmacs-leader-global nil)
+  (tmacs-bind
+   :states 'motion
+   tmacs-leader-local nil
+   ;; "C-f" nil
+   )
+  (tmacs-bind
+   :keymaps 'insert
+   tmacs-leader-non-normal nil)
+  ;;   (tmacs-bind-leader
+  ;;     "" nil)
+  )
+#+END_SRC
+** evil
+*** =evil=
+#+BEGIN_SRC emacs-lisp
+(use-package evil
+  :demand
+  :preface
+  (setq evil-want-keybinding nil)
+  :general
+  (tmacs-bind-leader
+    "hm" '(evil-lookup :wk "man"))
+  (tmacs-bind
+   :keymaps '(global normal insert)
+   "TAB" 'company-indent-or-complete-common
+   ;; "C-f" nil
+   )
+  :init
+  (setq evil-want-integration t)
+  (setq evil-collection-outline-bind-tab-p nil)
+  :config
+  ;; (define-key evil-motion-state-map [C-i] 'evil-jump-forward)
+  ;; (evil-select-search-module 'evil-search-module 'evil-search)
+
+  (setq evil-search-wrap nil
+	;; evil-magic 'very-magic
+	evil-shift-width 2)
+  (evil-mode 1)
+  (evil-ex-define-cmd "sp[lit]" 'tmacs-window-split-horizontally)
+  (evil-ex-define-cmd "vs[plit]" 'tmacs-window-split-vertically))
+#+END_SRC
+*** =evil-collection=
+#+BEGIN_SRC emacs-lisp
+(use-package evil-collection
+  :after evil
+  :config
+  (evil-collection-init))
+#+END_SRC
+*** =evil-magit=
+#+begin_src emacs-lisp
+(use-package evil-magit
+  :demand t
+  :after (evil magit)
+  :general
+  (tmacs/bind
+   :keymaps '(magit-status-mode-map magit-mode-map)
+   :states 'normal
+   "q" 'magit-mode-bury-buffer)
+  (tmacs/bind
+   :keymaps '(magit-status-mode-map 
+	      magit-mode-map 
+	      magit-diff-mode-map 
+	      magit-blame-mode-map)
+   "<M-tab>" nil
+   "M-1" nil
+   "M-2" nil
+   "M-3" nil
+   "M-4" nil))
+#+end_src
+*** =evil-matchit=
+#+begin_src emacs-lisp
+(use-package evil-matchit)
+#+end_src
+*** =evil-commentary=
+#+begin_src emacs-lisp
+(use-package evil-commentary
+  :after evil
+  :demand t
+  :init
+  (evil-commentary-mode))
+#+end_src
+*** =evil-surround=
+#+begin_src emacs-lisp
+(use-package evil-surround)
+#+end_src
+*** =evil-collection=
+#+begin_src emacs-lisp
+(use-package evil-collection)
+#+end_src
+** =which-key=
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+         :config
+         (setq which-key-sort-order 'which-key-key-order-alpha
+                 which-key-sort-uppercase-first nil
+                 which-key-prefix-prefix nil
+                 which-key-idle-delay 0.15
+                 which-key-min-display-lines 2
+                 which-key-idle-secondary-delay 0)
+         (which-key-mode))
+#+END_SRC
+** Globals
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+:general
+(tmacs-bind
+   :states 'motion
+   ;; tmacs-leader-local nil
+   "<S-up>" 'evil-window-up
+   "<S-right>" 'evil-window-right
+   "<S-down>" 'evil-window-down
+   "<S-left>" 'evil-window-left
+   "<C-SPC>" 'universal-argument))
+#+END_SRC
+*** =swiper=
+#+BEGIN_SRC emacs-lisp
+(use-package swiper
+  :general
+  (tmacs-bind
+   :states 'motion
+    "/" 'swiper)
+  (tmacs-bind
+   :states 'visual
+   "/" 'tmacs-swiper-visual)
+  :preface
+  (defun tmacs-swiper-visual ()
+    (interactive)
+    "Call `swiper' with visual selection and exit visual state."
+    (let* ((selection (evil-get-selection)))
+    (evil-exit-visual-state)
+    (swiper selection))))
+#+END_SRC
+** Leader
+*** root
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "(" '(eval-expression :wk "eval")
+    "SPC" '(execute-extended-command :wk "M-x")
+    "TAB" '(tmacs-buffer-previous :wk "TAB")
+    "/" '(tmacs-counsel-projectile-rg :wk "grep")
+    "+" '(calc :wk "calc")
+    )
+  (tmacs-bind
+   :states 'visual
+   "SPC /" 'tmacs-counsel-projectile-rg))
+#+END_SRC
+*** a
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "a" '(:ignore t :wk "app")
+    "a ESC" '(redraw-display :wk "ESC")
+    "a c" '(tmacs-apps-chromium :wk "chrome")
+    "a t" '(tmacs-apps-terminal :wk "urxvt"))
+  :preface
+  (defun tmacs-apps-chromium ()
+    (interactive)
+    (start-process-shell-command "chromium" nil "chromium"))
+  (defun tmacs-apps-terminal ()
+    (interactive)
+    (start-process-shell-command "urxvt" nil "urxvt")))
+#+END_SRC
+*** b
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "b" '(:ignore t :wk "buffer")
+    "b SPC" '(ivy-switch-buffer :wk "buffer")
+    "b TAB" '(tmacs-buffer-previous :wk "prev")
+    "bb" '(ivy-switch-buffer :wk "buffer")
+    "bm" '(tmacs-buffer-messages :wk "messages")
+    "bd" '(kill-current-buffer :wk "delete")
+    "bs" '(tmacs-buffer-scratch :wk "scratch")
+    "br" '(tmacs-buffer-rename :wk "rename")
+    "bm" '(tmacs-buffer-messages :wk "messages")
+    "bw" '(tmacs-buffer-warnings :wk "warnings")
+    "bn" '(next-buffer :wk "next")
+    "bN" '(previous-buffer :wk "prev"))
+  :config
+  ;; scratch buffer major mode  
+  (setq initial-major-mode #'emacs-lisp-mode)
+  :preface
+  (defun tmacs-buffer-messages ()
+    "Switch to the `*Messages*' buffer."
+    (interactive)
+    (switch-to-buffer (switch-to-buffer "*Messages*")))
+  (defun tmacs-buffer-warnings ()
+    "Switch to the `*Warnigns*' buffer."
+    (interactive)
+    (switch-to-buffer (switch-to-buffer "*Warnings*")))
+  (defun tmacs-buffer-scratch ()
+    "Create and switch to new unique scratch buffer."
+    (interactive)
+    (let* ((new-buffer (get-buffer-create (make-temp-name "scratch-"))))
+      (with-current-buffer new-buffer
+	(if (eq major-mode 'fundamental-mode)
+	    (funcall initial-major-mode)))
+      (switch-to-buffer new-buffer)))
+  (defun tmacs-buffer-rename ()
+    "Rename current buffer."
+    (interactive)
+    (rename-buffer (read-string "Rename buffer to: " (buffer-name))))
+  (defun tmacs-buffer-previous (&optional window)
+    "Switch back and forth between current and last buffer in the current window.
+If WINDOW is set, use different window than the current."
+    (interactive)
+    (let ((current-buffer (window-buffer window))
+          (buffer-predicate
+           (frame-parameter (window-frame window) 'buffer-predicate)))
+      ;; switch to first buffer previously shown in this window that matches
+      ;; frame-parameter `buffer-predicate'
+      (switch-to-buffer
+       (or (cl-find-if (lambda (buffer)
+                         (and (not (eq buffer current-buffer))
+                              (or (null buffer-predicate)
+                                  (funcall buffer-predicate buffer))))
+                       (mapcar #'car (window-prev-buffers window)))
+           ;; `other-buffer' honors `buffer-predicate' so no need to filter
+           (other-buffer current-buffer t))))))
+#+END_SRC
+**** =ivy=
+#+BEGIN_SRC emacs-lisp
+(use-package ivy
+  :config
+  (ivy-mode 1)
+  (define-key ivy-minibuffer-map [escape] 'minibuffer-keyboard-quit)
+  ;; add ‘recentf-mode’ and bookmarks to ‘ivy-switch-buffer’.
+  (setq ivy-use-virtual-buffers t)
+  ;; number of result lines to display
+  (setq ivy-height 10)
+  ;; do not count candidates
+  (setq ivy-count-format "(%d/%d)")
+  ;; no regexp by default
+  (setq ivy-initial-inputs-alist nil)
+  ;; don't exit on backspace
+  (setq ivy-on-del-error-function nil)
+  (setq ivy-use-selectable-prompt t)
+  ;; configure regexp engine.
+  (setq ivy-re-builders-alist
+	;; allow input not in order
+	'((t . ivy--regex-ignore-order))))
+#+END_SRC
+*** e
+#+begin_src emacs-lisp
+(use-package emacs
+  :after flycheck
+  :general
+  (tmacs-bind-leader
+    "el" '(tmacs-error-list-toggle :wk "list errors")
+    "El" '(tmacs-error-list-toggle :wk "list")
+    "En" '(flycheck-next-error :wk "next")
+    "Ep" '(flycheck-previous-error :wk "previous")
+    "Ev" '(flycheck-verify-setup :wk "verify")
+    "ea SPC" '(tmacs-edit-align-whitespace :wk "SPC")
+    "ea&" '(tmacs-edit-align-& :wk "&")
+    "ea," '(tmacs-edit-align-comma :wk ",")
+    )
+  :preface
+  ;; toggle flycheck window
+  (defun tmacs-error-list-toggle ()
+    "Toggle flycheck's error list window.
+If the error list is visible, hide it.  Otherwise, show it."
+    (interactive)
+    (-if-let (window (flycheck-get-error-list-window))
+	(quit-window nil window)
+      (flycheck-list-errors)))
+  ;; from: http://pragmaticemacs.com/emacs/aligning-text/
+  (defun tmacs-edit-align-whitespace (start end)
+    "Align columns by whitespace"
+    (interactive "r")
+    (align-regexp start end
+                  "\\(\\s-*\\)\\s-" 1 0 t))
+  (defun tmacs-edit-align-& (start end)
+    "Align columns by &"
+    (interactive "r")
+    (align-regexp start end
+                  "\\(\\s-*\\)&" 1 1 t))
+  (defun tmacs-edit-align-comma (start end)
+    "Align columns by comma"
+    (interactive "r")
+    (align-regexp start end
+                  "\\(\\s-*\\)," 1 1 t))
+  )
+#+end_src
+*** f
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "f" '(:ignore t :wk "file")
+    "fe" '(:ignore t :wk "emacs")
+    "fec" '(tmacs-file-config-src :wk "config")
+    "fei" '(tmacs-file-init :wk "init")
+    "fet" '(tmacs-file-tmacs :wk "tmacs (legacy)")
+    "feb" '(tmacs-file-bootstrap-emacs :wk "bootstrap")
+    "fep" '(tmacs-file-emacs-package :wk "package")
+    "fD" '(tmacs-file-delete :wk "Delete")
+    "fn" '(:ignore t :wk "nix")
+    "fnn" '(tmacs-file-nix-home :wk "home")
+    "fnh" '(tmacs-file-nix-home :wk "home")
+    "fnc" '(tmacs-file-nix-current-host :wk "config")
+    "fT" '(tmacs-file-touch :wk "Touch")
+    )
+  :preface
+  (defun tmacs-file-config-src ()
+    "Open 'tmacs-file-config-src."
+    (interactive)
+    (find-file-existing tmacs-file-config-src))
+  (defun tmacs-file-init ()
+    "Open 'tmacs-file-init."
+    (interactive)
+    (find-file-existing tmacs-file-init))
+  (defun tmacs-file-tmacs ()
+    "Open tmacs legacy config."
+    (interactive)
+    (find-file-existing (expand-file-name "~/tmacs/config.org")))
+  (defun tmacs-file-touch ()
+    "updates mtime on the file for the current buffer."
+    (interactive)
+    (shell-command (concat "touch " (shell-quote-argument (buffer-file-name))))
+    (clear-visited-file-modtime))
+(defun tmacs-file-bootstrap-emacs ()
+    "Open bootstrap config."
+    (interactive)
+    (find-file-existing (expand-file-name "init_bootstrap.el"
+                                          tmacs-file-nixos-emacs)))
+(defun tmacs-file-emacs-package ()
+    "Open emacs package file."
+    (interactive)
+    (find-file-existing (expand-file-name "services/emacs/package.nix"
+                                          tmacs-file-nixos-root)))
+(defun tmacs-file-delete ()
+  "Delete the current buffer and the file it is visiting."
+    (interactive)
+    (let ((file-name (buffer-file-name)))
+      (when (and file-name (yes-or-no-p (concat "Delete buffer and file " file-name "? ")))
+        (delete-file file-name)
+        (kill-current-buffer)
+        (message "Deleted %s." file-name))))
+(defun tmacs-file-nix-current-host ()
+    "Open current host config."
+    (interactive)
+    (find-file-existing (expand-file-name "hosts/current/default.nix"
+                                          tmacs-file-nixos-root)))
+(defun tmacs-file-nix-home ()
+    "Open home config."
+    (interactive)
+    (find-file-existing (expand-file-name "home/home.nix"
+                                          tmacs-file-nixos-root))))
+#+END_SRC
+*** g
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  ;; :after (magit git-timemachine)
+  :general
+  (tmacs-bind-leader
+    "g" '(:ignore t :wk "git")
+    "g ESC" '(redraw-display :wk t)
+    "gs" '(magit-status :wk "status")
+    "gs" '(magit-status :wk "status")
+    "gS" '(tmacs-magit-ediff-stage :wk "stage")
+    "gt" '(git-timemachine :wk "timemachine")
+    "gb" '(magit-blame :wk "blame")
+    "p#" '(magit-init :wk "init"))
+  (tmacs/bind-leader-local
+    :keymaps 'git-commit-mode-map
+    "c" 'with-editor-finish
+    "a" 'with-editor-cancel)
+  (tmacs/bind-leader-local
+    :keymaps 'magit-log-mode-map
+    "c" 'magit-log-select-pick
+    "a" 'magit-log-select-quit))
+#+END_SRC
+*** h
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "h" '(:ignore t :wk "help")
+    "hd" '(:ignore t :wk "describe")
+    "hdb" '(describe-bindings :wk "bindings")
+    "hdc" '(helpful-callable :wk "callable")
+    "hdC" '(helpful-command :wk "Command")
+    "hdd" '(helpful-at-point :wk "point")
+    "hdf" '(helpful-function :wk "function")
+    "hdF" '(describe-face :wk "Face")
+    "hdk" '(helpful-key :wk "key")
+    "hdK" '(general-describe-keybindings :wk "keymap")
+    "hdm" '(describe-mode :wk "mode")
+    "hdM" '(helpful-macro :wk "Macro")
+    "hdp" '(describe-package :wk "package")
+    "hdv" '(helpful-variable :wk "variable")
+    "hf" '(:ignore t :wk "faces")
+    "hff" '(list-faces-display :wk "faces")
+    "hfd" '(describe-face :wk "describe")
+    "hi" 'info
+    "hk" '(which-key-show-top-level :wk "keys")))
+#+END_SRC
+**** =helpful=
+#+begin_src emacs-lisp
+(use-package helpful
+  :general)
+#+end_src
+*** i
+#+begin_src emacs-lisp
+(use-package emacs
+  :after yasnippet
+  :general
+  (tmacs/bind-leader
+    "is" '(yas-insert-snippet :wk "snippet")
+    "iS$" '(yas-reload-all :wk "invalidate cache")
+    "iSe" '(yas-visit-snippet-file :wk "edit")
+    "iSn" '(yas-new-snippet :wk "new")))
+#+end_src
+*** m 
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs/bind-leader
+    "me" '(emacs-lisp-mode :wk "elisp")
+    "mo" '(org-mode :wk "org")
+    "mf" '(fundamental-mode :wk "fundamental")
+    "mt" '(text-mode :wk "text")
+    "mp" '(prog-mode :wk "prog")))
+#+END_SRC
+*** n
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "n" '(:ignore t :wk "nix")
+    "ne" '(:ignore t :wk "emacs")
+    "ner" '(tmacs-nix-emacs-reload :wk "reload")
+    "nl" '(tmacs-nix-load :wk "load")
+    "ns" '(tmacs-nix-stage :wk "stage")
+    "nS" '(tmacs-nix-switch :wk "Switch")
+    "nR" '(tmacs-nix-rollback :wk "Rollback")
+    "nu" '(tmacs-nix-update :wk "update"))
+  :preface
+  (defun tmacs-nix-emacs-reload ()
+    "Reload Emacs config."
+    (interactive)
+    (load-file tmacs-file-dotemacs))
+  (defun tmacs--nix-run (cmds)
+    "Run tnix binary with CMDS."
+    (let ((default-directory tmacs-file-nixos-root)
+          (compilation-buffer-name-function (lambda (ignore) 
+                                              "" "*tnix*")))
+      (compile (format "tnix %s" cmds) t)))
+  (defun tmacs-nix-load ()
+    "Load nix config."
+    (interactive)
+    (tmacs--nix-run "load"))
+  (defun tmacs-nix-stage ()
+    "Stage nix config."
+    (interactive)
+    (let ((default-directory "/etc/nixos"))
+      (if (not (magit-anything-unstaged-p))
+          (tmacs--nix-run "stage")
+        (message "Unstaged changes, please review.")
+        (magit-status))))
+  (defun tmacs-nix-switch ()
+    "Switch to new nix config."
+    (interactive)
+    (let ((default-directory "/etc/nixos"))
+      (if (not (magit-anything-modified-p))
+          (progn
+            (tmacs--nix-run "switch")
+            ;; TODO: only tag when exit code is 0
+            (magit-run-git "tag" "-d" "stable")
+            (magit-tag-create "stable" "HEAD"))
+        (message "Uncommited changes, please review.")
+        (magit-status))))
+  (defun tmacs-nix-rollback ()
+    "Rollback to last switched nix config."
+    (interactive)
+    (tmacs--nix-run "rollback"))
+  (defun tmacs-nix-update ()
+    "Update channels."
+    (interactive)
+    (tmacs--nix-run "update")))
+#+END_SRC
+*** p
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "p" '(:ignore t :wk "project")
+    "p:" '(projectile-run-eshell :wk "shell")
+    "pc" '(projectile-compile-project :wk "compile")
+    "pC" '(projectile-configure-project :wk "configure")
+    "pD" '(projectile-kill-buffers :wk "delete")
+    "pF" '(projectile-dired :wk "files")
+    "pr" '(projectile-run-project :wk "run")
+    ;; "px" '(tmacs/project/run :wk "exec")
+    "pt" '(projectile-test-project :wk "test")
+    "p." '(projectile-edit-dir-locals :wk "dir-locals")
+    "pi" '(tmacs-project-issues :wk "info")
+    "pI" '(org-projectile-capture-for-current-project :wk "new Issue")
+    "p SPC" '(counsel-projectile :wk "project")
+    "pb" '(counsel-projectile-switch-to-buffer :wk "buffer")
+    "pf" '(counsel-projectile-find-file :wk "file")
+    "pg" '(counsel-projectile-rg :wk "grep")
+    "p $" '(projectile-invalidate-cache :wk "invalidate")
+    "pl" '(counsel-projectile-switch-project :wk "list")
+    "fr" '(counsel-recentf :wk "recent")
+    "ff" '(counsel-find-file :wk "find")
+    ;; TODO: current dir (dired+?)
+    "f SPC" '(dired :wk "dired")
+    "fF" '(tmacs-counsel-find-file-frame :wk "find in Frame")
+    "iu" '(counsel-unicode-char :wk "unicode")
+    "hh" '(counsel-apropos :wk "help")
+
+))
+#+END_SRC
+**** =projectile=
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :demand
+  :after magit
+  :preface
+   ;;; Default rg arguments
+  ;; https://github.com/BurntSushi/ripgrep
+  (when (executable-find "rg")
+    (progn
+      (defun modi/advice-projectile-use-rg (ignore)
+        "Always use `rg' for getting a list of all files in the project."
+        (ignore ignore)
+        "rg --line-number --smart-case --follow --mmap --hidden -g '!.git' --null --files")
+      (defun tmacs-advice-projectile-get-sub-projects-files (&rest ignore)
+        (ignore ignore)
+        nil)))
+
+  (defun tmacs-projectile-project-type-cmake-configure ()
+    "Configure CMake project."
+    (interactive)
+    (let* ((build-type (tmacs--projectile-project-type-cmake-configure-prompt)))
+      (let ((default-directory (projectile-project-root)))
+        (compile (concat "(cd build && cmake -DCMAKE_BUILD_TYPE=" build-type " .. && make)")))))
+
+  (defvar tmacs--projectile-project-type-cmake-configure-previous nil
+    "Previously selected build type.")
+  (make-variable-buffer-local 'tmacs--projectile-project-type-cmake-configure-previous)
+
+  (defun tmacs--projectile-project-type-cmake-configure-prompt ()
+    "Prompt user for build type."
+    (interactive)
+    (setq-local tmacs--projectile-project-type-cmake-configure-previous 
+                (completing-read "Build Type: "
+                                 '("Debug" "RelWithDebInfo" "Release" "MinSizeRel")
+                                 nil
+                                 t
+                                 nil
+                                 nil
+                                 tmacs--projectile-project-type-cmake-configure-previous)))
+  :init
+  (advice-add 'projectile-get-ext-command :override #'modi/advice-projectile-use-rg)
+  (advice-add 'projectile-get-sub-projects-files :override #'tmacs-advice-projectile-get-sub-projects-files)
+  :config
+  ;; fix for https://github.com/bbatsov/projectile/issues/1270
+  ;; (setq projectile-project-compilation-cmd "")
+  ;; (setq projectile-project-run-cmd "")
+
+  (setq projectile-completion-system 'ivy
+        projectile-enable-caching nil)
+
+  (projectile-register-project-type 'npm '("package.json")
+                                    :src-dir "src"
+                                    :compile "npm run build"
+                                    :run "npm start"
+                                    :test "npm test"
+                                    :test-suffix ".test")
+
+  (projectile-register-project-type 'rust-cargo '("Cargo.toml")
+                                    :src-dir "src"
+                                    :compile "cargo build"
+                                    :run "cargo run"
+                                    :test "cargo test")
+
+  (projectile-register-project-type 'make '("Makefile")
+                                    :run "./main"
+                                    :compile "make"
+                                    :test "make test")
+
+  (projectile-register-project-type 'cmake '("CMakeLists.txt")
+                                    :run "(cd build && make && ./main)"
+                                    :compile "(cd build && cmake .. && make)"
+                                    :configure #'tmacs-projectile-project-type-cmake-configure 
+                                    :test "(cd build && make test)")
+
+  (projectile-mode))
+#+END_SRC
+**** =org-projectile=
+#+begin_src emacs-lisp
+(use-package org-projectile
+  :demand t
+  :after magit
+  :preface
+  (defun tmacs-project-issues ()
+    (interactive)
+    (org-projectile-goto-location-for-project (projectile-project-name)))
+  :init
+  (setq-default org-projectile-per-project-filepath "project.org")
+  :config
+  (org-projectile-per-project)
+  (setq org-agenda-files (append org-agenda-files
+                                 (cl-remove-if-not 'file-exists-p
+                                                   (org-projectile-todo-files)))))
+#+END_SRC
+#+end_src
+**** =counsel-projectile=
+#+begin_src emacs-lisp
+(use-package counsel-projectile
+  :after (org magit)
+  :preface
+  (defun tmacs-counsel-projectile-rg ()
+    (interactive)
+    (tmacs--with-visual-selection counsel-projectile-rg-initial-input
+				  (counsel-projectile-rg "--hidden")))
+  (defun counsel-org-goto-action (x)
+    "Go to headline in candidate X, show subtree and center screen."
+    (progn
+      (org-goto-marker-or-bmk (cdr x))
+      (org-show-subtree)
+      (recenter)))
+  :general
+  (general-def
+    :prefix tmacs-leader-local
+    :keymaps '(normal motion visual)
+    "SPC" '(counsel-imenu :wk "imenu"))
+  (tmacs-bind-leader-local
+    :keymaps 'org-mode-map
+    "SPC" '(counsel-org-goto :wk "goto"))
+  :config
+  (mapc #'projectile-add-known-project
+        (mapcar #'file-name-as-directory (magit-list-repos)))
+  ;; Optionally write to persistent `projectile-known-projects-file'
+  (projectile-save-known-projects)
+  (counsel-projectile-mode 1)
+  ;; open magit when opening new project
+  
+  ;;(counsel-projectile-modify-action
+  ;;  'counsel-projectile-switch-project-action
+  ;;  '((add ("of" frame-workflow-switch-directory-frame "open in frame"))
+;;  (default frame-workflow-switch-directory-frame)))
+
+  )
+#+end_src
+*** q
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :ensure nil
+  :general
+  (tmacs-bind-leader
+    "q" '(:ignore t :wk "quit")
+    "q ESC" '(redraw-display :wk t)
+    ;; "qr" '(tmacs-quit-emacs :wk "restart")
+    "qR" '(tmacs-quit-reboot :wk "Reboot")
+    "qq" '(tmacs-quit-emacs :wk "quit")
+    "qQ" '(tmacs-quit-shutdown :wk "Quit"))
+  :preface
+  (defun tmacs-quit-emacs ()
+    "Prompt to save changed buffers and exit Emacs."
+    (interactive)
+    (save-some-buffers)
+    (kill-emacs))
+  (defun tmacs-quit-reboot ()
+    "Reboot."
+    (interactive)
+    (tmacs--run-shell-async "reboot"))
+  (defun tmacs-quit-shutdown ()
+    "Reboot."
+    (interactive)
+    (tmacs--run-shell-async "shutdown now"))
+  )
+#+END_SRC
+**** =restart-emacs=
+#+BEGIN_SRC emacs-lisp
+  (use-package restart-emacs
+    :preface
+    (defun tmacs-quit-restart-emacs (&optional args)
+    "Restart Emacs."
+    (interactive)
+    (if (not tmacs-debug) (restart-emacs)
+      ;; Do not trigger a restart unless we are sure, we can restart emacs
+    (restart-emacs--ensure-can-restart)
+    ;; We need the new emacs to be spawned after all kill-emacs-hooks
+    ;; have been processed and there is nothing interesting left
+    (let* ((default-directory (restart-emacs--guess-startup-directory))
+           (restart-args '("-Q" "--load" "/etc/nixos/home/emacs/.emacs"))
+           (kill-emacs-hook (append kill-emacs-hook
+                                    (list (apply-partially #'restart-emacs--launch-other-emacs
+                                                           restart-args)))))
+      (save-buffers-kill-emacs)))))
+#+END_SRC
+*** w
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :general
+  (tmacs-bind-leader
+    "w" '(tmacs@window/body :wk "window"))
+  :preface
+  (defun tmacs-window-split-horizontally ()
+    "Split the window horizontally, then switch to the new pane."
+    (interactive)
+    (split-window-below)
+    (other-window 1))
+
+  (defun tmacs-window-split-vertically ()
+    "Split the window vertically, then switch to the new pane."
+    (interactive)
+    (split-window-right)
+    (other-window 1)))
+#+END_SRC
+* General
+** Startup
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :after exwm
+  :preface
+  (defun tmacs-exwm-startup ()
+    ;; (exwm-workspace-switch-create nil)
+    ;; (funcall #'tmacs-apps-terminal)
+    (exwm-workspace-switch-create 2)
+    (funcall #'tmacs-apps-chromium)
+    (exwm-workspace-switch-create 9)
+    (funcall 'tmacs-file-config-src))
+  :init
+  (defun display-startup-echo-area-message ()
+    (message ""))
+  (setq inhibit-startup-message t)
+  (setq initial-scratch-message "")
+  (add-hook 'emacs-startup-hook
+	    (lambda () (unless tmacs-debug 
+			 (message "Started emacs in: %s" (emacs-init-time)))))
+  ;; FIXME: (add-hook 'tmacs-exwm-startup-hook #'tmacs-exwm-startup)
+  )
+#+END_SRC
+** =counsel=
+#+BEGIN_SRC emacs-lisp
+(use-package counsel
+    :config
+  (counsel-mode))
+#+END_SRC
+** Compilation
+#+begin_src emacs-lisp
+(use-package emacs
+  :config
+  (setq compilation-scroll-output t))
+#+end_src
+** Help
+*** API-Demos
+#+begin_src emacs-lisp 
+(use-package elisp-demos
+  :demand
+  :init
+  (advice-add 'helpful-update
+	      :after
+	      #'elisp-demos-advice-helpful-update))
+#+end_src
+* UI
+** Defaults
+#+begin_src emacs-lisp
+(use-package emacs
+  :init
+  (add-hook 'prog-mode-hook #'column-number-mode)
+  :config
+  (defalias 'yes-or-no-p #'y-or-n-p)
+  (tooltip-mode)
+  (setq blink-cursor-blinks -1))
+#+end_src
+*** Scrolling
+#+BEGIN_SRC emacs-lisp
+ (setq scroll-conservatively 101
+         mouse-wheel-progressive-speed nil
+         mouse-wheel-scroll-amount '(2 ((shift) . 4) ((control) . 6))
+         mouse-wheel-follow-mouse 't)
+#+END_SRC
+** EXWM
+*** =exwm-randr=
+#+begin_src emacs-lisp
+(use-package exwm-randr
+  :config
+  ;; (setq exwm-randr-workspace-monitor-plist '(1 "HDMI2" 2 "HDMI2" 3 "HDMI2" 4 "HDMI2" 5 "HDMI2" 6 "HDMI2" 7 "HDMI2" 8 "HDMI2" 9 "HDMI2" 0 "eDP1"))
+  (setq exwm-randr-workspace-monitor-plist '(0 "eDP1"))
+  ;; (add-hook 'exwm-randr-screen-change-hook
+  ;; 	    (lambda ()
+  ;; 	      (start-process-shell-command
+  ;; 	       "xrandr" nil "xrandr --output VGA1 --left-of LVDS1 --auto")))
+  (exwm-randr-enable)
+  )
+#+end_src
+*** =exwm-systemtray=
+#+begin_src emacs-lisp
+(use-package exwm-systemtray
+  :demand
+  :config
+  (exwm-systemtray-enable))
+#+end_src
+*** =exwm=
+#+begin_src emacs-lisp
+(use-package exwm
+  :after (exwm-systemtray iflipb)
+  :demand
+  :general
+  (tmacs-bind 
+   :keymaps '(insert motion override exwm-mode-map)
+   ;; [M-tab] 'next-buffer
+   ;; [M-iso-lefttab] 'previous-buffer
+   [M-tab] 'iflipb-next-buffer
+   [M-iso-lefttab] 'iflipb-previous-buffer
+   [s-tab] 'tmacs@window/body
+   [S-right] 'evil-window-right
+   [S-left] 'evil-window-left
+   [S-up] 'evil-window-up
+   [S-down] 'evil-window-down
+   "M-b" 'ivy-switch-buffer
+   )
+  :init
+  (add-hook 'exwm-update-class-hook
+            (lambda ()
+              (exwm-workspace-rename-buffer exwm-class-name)))
+  (add-hook 'exwm-manage-finish-hook #'my/exwm-window-managed)
+  (defvar tmacs-exwm-startup-hook nil
+    "Hook run after initialization of exwm.")
+  :config
+  (setq exwm-workspace-number 10
+	exwm-input-global-keys
+	`(;; 's-r': Reset (to line-mode).
+	  ([?\M-r] . exwm-reset)
+	  ;; 's-w': Switch workspace.
+	  ([?\M-w] . exwm-workspace-switch)
+	  ([?\M-e] . exwm-edit--compose)
+	  ([?\M-\t] . iflipb-next-buffer)
+	  (,(kbd "<XF86AudioRaiseVolume>") . tmacs-desktop-volume-raise)
+	  (,(kbd "<XF86AudioLowerVolume>") . tmacs-desktop-volume-lower)
+	  (,(kbd "<XF86AudioMute>") . tmacs-desktop-volume-mute)
+	  (,(kbd "<S-iso-leftab>") . iflipb-previous-buffer)
+	  ;; 's-&': Launch application.
+	  ([?\s-\s] . (lambda (command)
+			(interactive (list (read-shell-command "$ ")))
+			(start-process-shell-command command nil command)))
+	  ;; 's-N': Switch to certain workspace.
+	  ,@(mapcar (lambda (i)
+		      `(,(kbd (format "M-%d" i)) .
+			(lambda ()
+			  (interactive)
+			  (exwm-workspace-switch-create ,i))))
+		    (number-sequence 0 9))))
+  (setq exwm-input-simulation-keys'(
+				    
+				    ;; ([?\C-b] . [left])
+				    
+				    ;; ([?\C-f] . [right])
+				    
+				    ;; ([?\C-p] . [up])
+				    ;; ([?\C-n] . [down])
+				    ([?\C-a] . [home])
+				    ([?\C-e] . [end])
+				    ;; ([?\M-v] . [prior])
+				    ;; ([?\C-v] . [next])
+				    ;; ([?\C-d] . [delete])
+				    ;; ([?\C-k] . [S-end delete])
+				    ))
+  (add-to-list 'exwm-input-prefix-keys ?\M-\s)
+  (add-to-list 'exwm-input-prefix-keys ?\M-\t)
+  (add-to-list 'exwm-input-prefix-keys ?\s-\t)
+  (add-to-list 'exwm-input-prefix-keys ?\M-b)
+  ;; TODO: investigate height problems
+  ;; (setq exwm-workspace-minibuffer-position 'bottom)
+  ;; disable simulation keys for terminal:
+  (run-hooks 'tmacs-exwm-startup-hook)
+  :preface
+  (defconst tmacs--desktop-volume-format-string
+    "amixer -q set Master %s unmute; volnoti-show $(amixer get Master | grep -Po '[0-9]+(?=%%)' | tail -1)")
+  (defun tmacs-desktop-volume-raise ()
+    "Raise desktop volume."
+    (interactive)
+    (start-process-shell-command "tmacs-desktop" 
+				 nil 
+				 (format tmacs--desktop-volume-format-string "1+")))
+  (defun tmacs-desktop-volume-lower ()
+    "Lower desktop volume."
+    (interactive)
+    (start-process-shell-command "tmacs-desktop" 
+				 nil 
+				 (format tmacs--desktop-volume-format-string "1-")))
+  (defun tmacs-desktop-volume-mute ()
+    "Mute toggle desktop volume."
+    (interactive)
+    (start-process-shell-command "tmacs-desktop" 
+				 nil 
+				 "amixer -q set Master toggle; if amixer get Master | grep -Fq '[off]'; then volnoti-show -m; else volnoti-show $(amixer get Master | grep -Po '[0-9]+(?=%)' | tail -1); fi"
+				 ))
+  (defun my/exwm-window-managed ()
+    "To be called from exwm-manage-finish-hook."
+    (when exwm-class-name
+      (cond 
+       ;; ((string= exwm-class-name "URxvt")
+       ;; 	(call-interactively 'exwm-input-release-keyboard))
+       ((string= exwm-class-name "Emacs")
+	(call-interactively 'exwm-input-release-keyboard))))
+    ;; (message "exwm-class-name: %s" exwm-class-name)
+    ))
+#+end_src
+*** =exwm-edit=
+#+begin_src emacs-lisp
+(use-package exwm-edit
+  :after exwm
+  :demand t
+  :general
+  (tmacs-bind
+   :keymaps 'exwm-mode-map
+   "C-c" nil)
+  (tmacs-bind-leader-local
+    :keymaps 'exwm-edit-mode-map
+    "c" 'exwm-edit--finish
+    "a" 'exwm-edit--cancel)
+  ;; :init
+  ;; (define-key exwm-mode-map (kbd "C-c") nil)
+  :init
+  (setq exwm-edit-bind-default-keys nil)
+  :config
+  ;; (exwm-input-set-key (kbd "C-c '") nil)
+  ;; (exwm-input-set-key (kbd "C-c C-'") nil)
+  
+  ;; (define-key exwm-input-mode-map (kbd "C-c") nil)
+  )
+#+end_src
+** Windows
+*** =golden-ratio=
+#+BEGIN_SRC emacs-lisp
+(use-package golden-ratio
+  :preface
+  (defun tmacs-ediff-comparison-buffer-p ()
+    (and (boundp 'ediff-this-buffer-ediff-sessions)
+	 ediff-this-buffer-ediff-sessions))
+  :config
+  (add-to-list 'golden-ratio-exclude-modes "ediff-mode")
+  (add-to-list 'golden-ratio-inhibit-functions 'tmacs-ediff-comparison-buffer-p)
+  (setq golden-ratio-extra-commands '(evil-window-left 
+				      evil-window-up 
+				      evil-window-right 
+				      evil-window-down))
+  (setq golden-ratio-auto-scale t)
+  (golden-ratio-mode 1))
+#+END_SRC
+*** =move-border=
+#+BEGIN_SRC emacs-lisp
+(use-package move-border
+  :commands (move-border-left
+	     move-border-down
+	     move-border-up
+	     move-border-right))
+#+END_SRC
+*** =winner=
+#+BEGIN_SRC emacs-lisp
+(use-package winner
+  :preface
+  (defvar tmacs-window-last-config nil)
+  (defun tmacs-window-split-horizontally-for-temp-buffers ()
+    (setq tmacs-window-last-config (current-window-configuration))
+    (when (one-window-p t)
+      (split-window-horizontally)))
+  ;; from: https://www.emacswiki.org/emacs/ToggleWindowSplit
+  (defun tmacs-window-toggle-split ()
+    "Toggle vertical/horizontal split."
+    (interactive)
+    (if (= (count-windows) 2)
+        (let* ((this-win-buffer (window-buffer))
+	       (next-win-buffer (window-buffer (next-window)))
+	       (this-win-edges (window-edges (selected-window)))
+	       (next-win-edges (window-edges (next-window)))
+	       (this-win-2nd (not (and (<= (car this-win-edges)
+					   (car next-win-edges))
+				       (<= (cadr this-win-edges)
+					   (cadr next-win-edges)))))
+	       (splitter
+		(if (= (car this-win-edges)
+		       (car (window-edges (next-window))))
+		    'split-window-horizontally
+		  'split-window-vertically)))
+	  (delete-other-windows)
+	  (let ((first-win (selected-window)))
+	    (funcall splitter)
+	    (if this-win-2nd (other-window 1))
+	    (set-window-buffer (selected-window) this-win-buffer)
+	    (set-window-buffer (next-window) next-win-buffer)
+	    (select-window first-win)
+	    (if this-win-2nd (other-window 1))))))
+  (defun tmacs-window-previous ()
+    "Switch back and forth between current and last window in the current frame."
+    (interactive)
+    (let (;; switch to first window previously shown in this frame
+          (prev-window (get-mru-window nil t t)))
+      ;; Check window was not found successfully
+      (unless prev-window (user-error "Last window not found"))
+      (select-window prev-window)))
+
+  (defun tmacs-window-delete (&optional arg)
+    "Delete the current window.
+If the universal prefix argument ARG is used then kill the buffer too."
+    (interactive "P")
+    (if (equal '(4) arg)
+        (kill-buffer-and-window)
+      (delete-window)))
+  :init
+  (add-hook 'temp-buffer-window-setup-hook
+            'tmacs-window-split-horizontally-for-temp-buffers)
+  (setq winner-dont-bind-my-keys t)
+  :config
+  (pretty-hydra-define tmacs@window (:hint nil)
+    ("Management" 
+     (("d" delete-window "delete" :exit t)
+      ("D" delete-other-windows "delete other" :exit t)
+      ("<tab>" ace-swap-window "swap" :exit t)
+      ("a" ace-select-window "select")
+      ("o" other-window "cycle")
+      ("t" tmacs-window-toggle-split "toggle split")
+      )
+     "Select"
+     (("<left>" evil-window-left "←")
+      ("<down>" evil-window-down "↓")
+      ("<up>" evil-window-up "↑")
+      ("<right>" evil-window-right "→"))
+     "Resize"
+     (
+      ;; ("g" golden-ratio-mode "golden ratio")
+      ("<S-left>" move-border-left "←")
+      ("<S-down>" move-border-down "↓")
+      ("<S-up>" move-border-up "↑")
+      ("<S-right>" move-border-right "→")
+      ("n" balance-windows "balance"))
+     "History"
+     (("u" winner-undo "undo")
+      ("C-r" winner-redo "redo"))
+     "Rotate"
+     (("r" evil-window-rotate-downwards "rotate cw")
+      ("R" evil-window-rotate-upwards "rotate ccw"))
+     "Split"
+     (("h" tmacs-window-split-horizontally "horizontally")
+      ;; non-memoic shurtcut due to muscle memory of :sp vim command
+      ("s" tmacs-window-split-vertically "horizontally")
+      ("v" tmacs-window-split-vertically "vertically"))))
+  (winner-mode))
+#+END_SRC
+** Buffers
+*** Minibuffer
+#+begin_src emacs-lisp
+(use-package emacs
+  :init
+  (add-hook 'eval-expression-minibuffer-setup-hook #'eldoc-mode)
+  (add-hook 'eval-expression-minibuffer-setup-hook (lambda () (insert "()") (backward-char)))
+  :config
+  (setq enable-recursive-minibuffers t
+        savehist-save-minibuffer-history t))
+#+end_src
+**** Echo Area
+#+begin_src emacs-lisp
+(use-package emacs
+  :config
+  (fringe-mode '(0 . 0))
+  (dolist
+      (buf (list " *Minibuf-0*" 
+		 " *Minibuf-1*" 
+		 " *Echo Area 0*" 
+		 " *Echo Area 1*" 
+		 "*Quail Completions*"))
+    (when (get-buffer buf)
+      (with-current-buffer buf
+	(setq-local face-remapping-alist '((default 
+					     (:height 0.75) 
+					     (:background "#000000"))))))))
+#+end_src
+*** =iflipb=
+#+begin_src emacs-lisp
+(use-package iflipb
+  :demand)
+#+end_src
+*** =uniquify=
+#+begin_src emacs-lisp
+(use-package uniquify
+  :defer 2
+  :init
+  (setq uniquify-buffer-name-style 'forward))
+#+end_src
+** Theme
+#+BEGIN_SRC emacs-lisp
+(use-package zenburn-theme
+  :demand
+  :config
+  (setq zenburn-use-variable-pitch t
+	zenburn-scale-org-headlines t
+	zenburn-scale-outline-headlines t))
+#+END_SRC
+** Modeline
+#+begin_src emacs-lisp
+(use-package emacs
+  :config
+  (setq display-time-default-load-average nil
+	display-time-format " %a %F %H:%M")
+  (display-time-mode))
+#+end_src
+*** =doom-modeline=
+#+begin_src emacs-lisp
+;; FIXME: use version pinned in home/emacs/package.nix
+(use-package doom-modeline
+  :hook (after-init . doom-modeline-mode)
+  :config
+  (doom-modeline-def-modeline 'tmacs-main
+    '(bar 
+      ;; workspace-number 
+      window-number
+      ;; evil-state 
+      ;; ryo-modal 
+      ;; xah-fly-keys 
+      matches 
+      buffer-info 
+      remote-host 
+      buffer-position 
+      parrot 
+      selection-info)
+    '(persp-name 
+      lsp 
+      irc 
+      mu4e 
+      github debug 
+      fancy-battery 
+      minor-modes 
+      input-method 
+      buffer-encoding 
+      major-mode 
+      process 
+      vcs 
+      checker 
+      misc-info))
+  (defun tmacs-doom-modeline-mode-hook ()
+    (doom-modeline-set-modeline 'tmacs-main 'default))
+  (add-hook 'doom-modeline-mode-hook 'tmacs-doom-modeline-mode-hook)
+  (setq doom-modeline-height 25))
+#+end_src
+** Highlighting
+*** =hl-line=
+#+begin_src emacs-lisp
+(use-package hl-line
+  :init (global-hl-line-mode t)
+  :config
+  (setq hl-line-sticky-flag nil
+        global-hl-line-sticky-flag nil))
+#+end_src
+*** =hl-todo=
+#+BEGIN_SRC emacs-lisp
+(use-package hl-todo
+  :demand t
+  :config
+  (setq hl-todo-keyword-faces
+        '(("HOLD" . "#d0bf8f")
+          ("WIP" . "#d0bf8f")
+          ("TODO" . "#cc9393")
+          ("NEXT" . "#dca3a3")
+          ("THEM" . "#dc8cc3")
+          ("PROG" . "#7cb8bb")
+          ("OKAY" . "#7cb8bb")
+          ("DONT" . "#5f7f5f")
+          ("DISABLED" . "#5f7f5f")
+          ("FAIL" . "#8c5353")
+          ("DONE" . "#afd8af")
+          ("NOTE"   . "#d0bf8f")
+          ("KLUDGE" . "#d0bf8f")
+          ("HACK"   . "#d0bf8f")
+          ("FIXME"  . "#cc9393")
+          ("XXX"    . "#cc9393")
+          ("XXXX"   . "#cc9393")
+          ("???"    . "#cc9393")))
+  (global-hl-todo-mode))
+#+END_SRC
+* Editing
+** Defaults
+#+begin_src emacs-lisp
+(use-package emacs
+  :config
+  ;; Put all backup files in a single place
+  (let ((backup-dir (expand-file-name "backup" user-emacs-directory)))
+    (unless (file-directory-p backup-dir)
+      (mkdir backup-dir t))
+    (setq backup-directory-alist `(("." . ,backup-dir))))
+  (setq auto-save-file-name-transforms `((".*" ,(concat user-emacs-directory "auto-save") t))
+	auto-save-list-file-name (concat user-emacs-directory "autosave")
+	abbrev-file-name (concat user-emacs-directory "abbrev_defs")
+	backup-by-copying t
+	version-control t
+	vc-make-backup-files t
+	kept-new-versions 10
+	kept-old-versions 0
+	delete-old-versions t
+	;; Disable creation of lock-files named .#<filaname>
+	create-lockfiles nil
+	large-file-warning-threshold 100000000)
+  (save-place-mode 1)
+  (delete-selection-mode t))
+#+end_src
+
+Adapted from: [[https://github.com/hrs/sensible-defaults.el/blob/master/sensible-defaults.el][hrs/sensible-defaults]]
+#+BEGIN_SRC emacs-lisp
+(setq-default indent-tabs-mode nil
+              tab-width 2
+              js-indent-level 2
+              sentence-end-double-space nil
+              vc-follow-symlinks t
+              tab-always-indent 'complete
+              max-specpdl-size 10000
+              save-interprogram-paste-before-kill t
+              help-window-select t
+              fill-column 80)
+#+END_SRC
+
+Treat CamelCase as separate words.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'prog-mode-hook 'subword-mode)
+#+END_SRC
+
+When saving a file that starts with a shebang, make it executable.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'after-save-hook
+          'executable-make-buffer-file-executable-if-script-p)
+#+END_SRC
+
+When saving a file in a directory that doesn't exist, offer
+to (recursively) create the file's parent directories.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'before-save-hook
+          (lambda ()
+            (when buffer-file-name
+              (let ((dir (file-name-directory buffer-file-name)))
+                (when (and (not (file-exists-p dir))
+                           (y-or-n-p (format "Directory %s does not exist. Create it?" dir)))
+                  (make-directory dir t))))))
+#+END_SRC
+
+Add file sizes in human-readable units (KB, MB, etc) to dired buffers.
+#+BEGIN_SRC emacs-lisp
+(setq-default dired-listing-switches "-alh")
+#+END_SRC
+
+Use ligatures, to show fancy symbols for lambda functions and more.
+#+BEGIN_SRC emacs-lisp
+(global-prettify-symbols-mode t)
+#+END_SRC
+*** UTF-8
+Use UTF-8 everywhere.
+#+BEGIN_SRC emacs-lisp
+(use-package emacs
+  :config
+  (when (fboundp 'set-charset-priority)
+    (set-charset-priority 'unicode))
+  (prefer-coding-system                   'utf-8)
+  (set-terminal-coding-system             'utf-8)
+  (set-keyboard-coding-system             'utf-8)
+  (set-selection-coding-system            'utf-8)
+  (setq locale-coding-system              'utf-8)
+  (setq-default buffer-file-coding-system 'utf-8))
+#+END_SRC
+** Autosave
+Save files periodically and on close.
+#+BEGIN_SRC emacs-lisp
+(use-package savehist
+  :config
+  (setq savehist-file (concat user-emacs-directory "savehist")
+        history-length 1000
+        savehist-autosave-interval 60
+        savehist-additional-variables '(mark-ring
+                                        global-mark-ring
+                                        search-ring
+                                        regexp-search-ring
+                                        extended-command-history))
+  (savehist-mode t))
+#+END_SRC
+** Auto Completion
+*** =Company=
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :demand
+  :general
+  (tmacs-bind
+   :keymaps 'company-active-map
+   :states 'insert
+   "<tab>" 'company-complete-common-or-cycle)
+  :config
+  (setq company-idle-delay 0
+        company-minimum-prefix-length 2
+        company-require-match nil
+        company-dabbrev-ignore-case nil
+        company-dabbrev-downcase nil
+        company-tooltip-align-annotations t)
+  (global-company-mode))
+#+END_SRC
+** =autorevert=
+#+BEGIN_SRC emacs-lisp
+(use-package autorevert
+  :init
+  (setq auto-revert-verbose nil
+	global-auto-revert-non-file-buffers t)
+  (global-auto-revert-mode))
+#+END_SRC
+** =auto-indent-mode=
+#+begin_src emacs-lisp
+(use-package auto-indent-mode
+  :config
+  (auto-indent-global-mode))
+#+end_src
+** Alignment
+Helper bindings to allow aligning columns of text.
+#+begin_src emacs-lisp
+(use-package emacs
+  :preface
+  ;; from: http://pragmaticemacs.com/emacs/aligning-text/
+  (defun tmacs-edit-align-whitespace (start end)
+    "Align columns by whitespace"
+    (interactive "r")
+    (align-regexp start end
+                  "\\(\\s-*\\)\\s-" 1 0 t))
+  (defun tmacs-edit-align-& (start end)
+    "Align columns by &"
+    (interactive "r")
+    (align-regexp start end
+                  "\\(\\s-*\\)&" 1 1 t))
+  (defun tmacs-edit-align-comma (start end)
+    "Align columns by comma"
+    (interactive "r")
+    (align-regexp start end
+                  "\\(\\s-*\\)," 1 1 t))
+  :general
+  (tmacs/bind-leader
+    "ea SPC" '(tmacs-edit-align-whitespace :wk "SPC")
+    "ea&" '(tmacs-edit-align-& :wk "&")
+    "ea," '(tmacs-edit-align-comma :wk ",")))
+#+end_src
+** =recentf=
+Keep a list of the most recently used files.
+#+BEGIN_SRC emacs-lisp
+(use-package recentf
+  :init
+  (add-hook 'find-file-hook
+            (lambda () (unless recentf-mode
+			 (recentf-mode)
+			 (recentf-track-opened-file))))
+  :config
+  (setq recentf-save-file (concat user-emacs-directory "recentf")
+        recentf-max-saved-items 1000
+        recentf-auto-cleanup 'never
+        recentf-filename-handlers '(abbreviate-file-name)))
+#+END_SRC
+** Syntax checking
+*** =flycheck=
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :init
+  (add-hook 'prog-mode-hook 'flycheck-mode)
+  (add-hook 'markdown-mode-hook #'flycheck-mode)
+  (add-hook 'text-mode-hook #'flycheck-mode)
+  (add-hook 'org-mode-hook #'flycheck-mode)
+  :config
+  (flycheck-add-mode 'proselint 'org-mode)
+  (setq-default flycheck-check-syntax-automatically '(save idle-change mode-enabled)
+		flycheck-idle-change-delay 3)
+  (define-fringe-bitmap 'my-flycheck-fringe-indicator
+    (vector #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00011100
+            #b00111110
+            #b00111110
+            #b00111110
+            #b00011100
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000
+            #b00000000))
+  (flycheck-define-error-level 'error
+    :severity 2
+    :overlay-category 'flycheck-error-overlay
+    :fringe-bitmap 'my-flycheck-fringe-indicator
+    :fringe-face 'flycheck-fringe-error)
+  (flycheck-define-error-level 'warning
+    :severity 1
+    :overlay-category 'flycheck-warning-overlay
+    :fringe-bitmap 'my-flycheck-fringe-indicator
+    :fringe-face 'flycheck-fringe-warning)
+  (flycheck-define-error-level 'info
+    :severity 0
+    :overlay-category 'flycheck-info-overlay
+    :fringe-bitmap 'my-flycheck-fringe-indicator
+    :fringe-face 'flycheck-fringe-info))
+
+
+#+END_SRC
+
+** Snippets
+*** =yasnippet=
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :config
+  (setq yas-snippet-dirs '("/etc/nixos/home/snippets"))
+  (yas-global-mode 1))
+#+end_src
+
+*** =yasnippet-snippets=
+#+begin_src emacs-lisp
+(use-package yasnippet-snippets
+  :after yasnippet)
+#+end_src
+
+** Version Control
+*** =magit=
+#+begin_src emacs-lisp
+(use-package magit
+  :preface
+  (defun tmacs-magit-ediff-stage ()
+    (interactive)
+    "Stage current file using ediff."
+    (magit-ediff-stage (magit-current-file)))
+  :init
+  (add-hook 'magit-log-mode-hook #'evil-normalize-keymaps)
+  :config
+  (defun tmacs/magit-rebase-split-commit-do ()
+    (remove-hook 'magit-post-refresh-hook 'tmacs/magit-rebase-split-commit-do t)
+    (magit-reset-head "HEAD^"))
+  (defun tmacs/magit-rebase-split-commit (commit args)
+    (interactive (list (magit-commit-at-point)
+                       (magit-rebase-arguments)))
+    (add-hook 'magit-post-refresh-hook 'tmacs/magit-rebase-split-commit-do nil t)
+    (magit-rebase-edit-commit commit args))
+  (magit-define-popup-action 'magit-rebase-popup
+			     ?S "to Split up a commit" 'tmacs/magit-rebase-split-commit)
+  (setq magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1
+        magit-bury-buffer-function #'magit-mode-quit-window
+        ;; magit-bury-buffer-function #'tmacs-magit-mode-bury-buffer-function 
+        magit-save-repository-buffers 'dontask
+        magit-repository-directories
+        '(;; Specific project root directory
+          ("/etc/nixos" . 0)
+          ;; Directory containing project root directories
+          ("/data/dev" . 2))))
+#+end_src
+*** =magit-todos=
+#+BEGIN_SRC emacs-lisp
+(use-package magit-todos
+  :after magit
+  :config
+  (setq magit-todos-fontify-org nil
+        magit-todos-ignore-directories '("node_modules" "dist" "flow-typed/npm" "vendor")
+        magit-todos-ignore-file-suffixes '(".org_archive" ".min.js")
+        magit-todos-recursive t
+        magit-todos-depth 15
+        magit-todos-ignore-case t)
+  (magit-todos-mode))
+#+END_SRC
+*** Git Gutter
+#+BEGIN_SRC emacs-lisp
+(use-package diff-hl
+  :init
+  (setq diff-hl-side 'left
+	diff-hl-margin-symbols-alist
+	'((insert . "+") (delete . "-") (change . "~")
+	  (unknown . "?") (ignored . "i")))
+  (add-hook 'magit-post-refresh-hook #'diff-hl-magit-post-refresh)
+  (diff-hl-flydiff-mode)
+  (diff-hl-margin-mode)
+  (global-diff-hl-mode))
+#+END_SRC
+*** Time Machine
+#+BEGIN_SRC emacs-lisp
+(use-package git-timemachine
+  :commands (git-timemachine)
+  :general
+  (tmacs/bind-leader
+    "gt" '(git-timemachine :wk "timemachine"))
+  :config
+  (evil-make-overriding-map git-timemachine-mode-map 'normal)
+  (add-hook 'git-timemachine-mode-hook #'evil-normalize-keymaps))
+#+END_SRC
+** Whitespace
+#+BEGIN_SRC emacs-lisp
+(setq require-final-newline t)
+#+END_SRC
+*** =ws-butler=
+#+begin_src emacs-lisp
+(use-package ws-butler
+  :config
+  (setq ws-butler-global-exempt-modes '(markdown-mode org-mode))
+  (ws-butler-global-mode 1))
+#+end_src
+
+* Org
+** =org=
+#+begin_src emacs-lisp
+(use-package org
+  :general
+  (tmacs-bind-leader-local
+    :keymaps 'org-mode-map
+    "e" '(org-edit-special :wk "edit")
+    "$" '(org-refile :wk "refile"))
+  :config
+  (setq org-startup-indented t
+        org-startup-folded 'content
+        org-refile-targets '((nil :maxlevel . 4)
+					; (org-agenda-files :maxlevel . 3)
+			     )))
+   #+end_src
+** =org-indent=
+#+begin_src emacs-lisp
+(use-package org-indent)
+#+end_src
+** =org-tempo=
+#+BEGIN_SRC emacs-lisp
+(use-package org-tempo)
+#+END_SRC
+** =org-src=
+   #+begin_src emacs-lisp
+(use-package org-src
+  :general
+  (tmacs-bind-leader-local
+    :keymaps 'org-src-mode-map
+    "c" '(tmacs-org-edit-src-save-exit :wk "commit")
+    "a" '(org-edit-src-abort :wk "abort"))
+  :init
+  (add-hook 'org-src-mode-hook 'tmacs-org-src-mode)
+  :config
+  (setq org-src-fontify-natively t
+	org-src-window-setup 'current-window
+	org-src-strip-leading-and-trailing-blank-lines t
+	org-src-preserve-indentation t
+	org-src-tab-acts-natively t)
+  :preface
+  (defun tmacs-org-src-mode ()
+    (setq-local header-line-format "Edit, then commit with ,c or abort with ,a")
+    (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc))
+    (evil-normalize-keymaps))
+  ;; TODO: advise this instead
+  (defun tmacs-org-edit-src-save-exit ()
+    "Save and exit org-edit-src buffer."
+    (interactive)
+    (org-edit-src-save)
+    (org-edit-src-exit)))
+   #+end_src
+* Project 
+* Major Modes
+** Nix
+*** =nix-mode=
+#+begin_src emacs-lisp
+(use-package nix-mode
+  :init
+  (add-hook 'shell-mode-hook 'nix-prettify-mode)
+  (add-hook 'dired-mode-hook 'nix-prettify-mode))
+#+end_src
+*** =nix-sandbox=
+#+begin_src emacs-lisp
+(use-package nix-sandbox)
+#+end_src
+*** =nixos-options=
+#+begin_src emacs-lisp
+(use-package nixos-options)
+#+end_src
+*** =company-nixos-options=
+#+begin_src emacs-lisp
+(use-package company-nixos-options
+  :after company
+  :demand
+  :config
+  ;; FIXME: Company: backend company-nixos-options error "Wrong type argument: stringp, nil" with args (prefix)
+  ;; (add-to-list 'company-backends 'company-nixos-options)
+  )
+#+end_src
+** Lisp
+*** General
+#+BEGIN_SRC emacs-lisp
+(use-package tmacs-lisp
+  :preface
+  (defun tmacs-lisp-byte-compile-and-load ()
+    "Save current buffer, byte compile file and load."
+    (interactive)
+    (save-buffer)
+    (emacs-lisp-byte-compile-and-load))
+  :general
+  (tmacs-bind-leader-local
+    :keymaps 'emacs-lisp-mode-map
+    "," 'eval-last-sexp
+    "$" 'tmacs-lisp-byte-compile-and-load))
+#+END_SRC
+#+BEGIN_SRC emacs-lisp
+(defun conditionally-enable-lispy ()
+  (when (eq this-command 'eval-expression)
+    (lispy-mode 1)))
+(use-package lispyville
+  :init
+  (add-hook 'emacs-lisp-mode-hook #'conditionally-enable-lispy))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package aggressive-indent
+  :init 
+  (add-hook 'emacs-lisp-mode-hook #'aggressive-indent-mode)
+  (dolist (mode-hook '(emacs-lisp-mode-hook
+                       sql-mode-hook))
+    (add-hook mode-hook #'aggressive-indent-mode)))
+#+END_SRC
+*** Custom Indent
+#+BEGIN_SRC emacs-lisp
+;; https://github.com/Fuco1/.emacs.d/blob/af82072196564fa57726bdbabf97f1d35c43b7f7/site-lisp/redef.el#L20-L94
+(defun Fuco1/lisp-indent-function (indent-point state)
+  (let ((normal-indent (current-column))
+        (orig-point (point)))
+    (goto-char (1+ (elt state 1)))
+    (parse-partial-sexp (point) calculate-lisp-indent-last-sexp 0 t)
+    (cond
+     ;; car of form doesn't seem to be a symbol, or is a keyword
+     ((and (elt state 2)
+           (or (not (looking-at "\\sw\\|\\s_"))
+               (looking-at ":")))
+      (if (not (> (save-excursion (forward-line 1) (point))
+		  calculate-lisp-indent-last-sexp))
+          (progn (goto-char calculate-lisp-indent-last-sexp)
+                 (beginning-of-line)
+                 (parse-partial-sexp (point)
+                                     calculate-lisp-indent-last-sexp 0 t)))
+      ;; Indent under the list or under the first sexp on the same
+      ;; line as calculate-lisp-indent-last-sexp.  Note that first
+      ;; thing on that line has to be complete sexp since we are
+      ;; inside the innermost containing sexp.
+      (backward-prefix-chars)
+      (current-column))
+     ((and (save-excursion
+             (goto-char indent-point)
+             (skip-syntax-forward " ")
+             (not (looking-at ":")))
+           (save-excursion
+             (goto-char orig-point)
+             (looking-at ":")))
+      (save-excursion
+        (goto-char (+ 2 (elt state 1)))
+        (current-column)))
+     (t
+      (let ((function (buffer-substring (point)
+                                        (progn (forward-sexp 1) (point))))
+            method)
+        (setq method (or (function-get (intern-soft function)
+                                       'lisp-indent-function)
+                         (get (intern-soft function) 'lisp-indent-hook)))
+        (cond ((or (eq method 'defun)
+                   (and (null method)
+                        (> (length function) 3)
+                        (string-match "\\`def" function)))
+               (lisp-indent-defform state indent-point))
+              ((integerp method)
+               (lisp-indent-specform method state
+                                     indent-point normal-indent))
+              (method
+               (funcall method indent-point state))))))))
+
+  (add-hook 'emacs-lisp-mode-hook
+            (lambda () (setq-local lisp-indent-function #'Fuco1/lisp-indent-function)))
+#+END_SRC
+*** Macrostep
+#+BEGIN_SRC emacs-lisp
+(use-package macrostep
+  :general
+  (tmacs-bind-leader-local
+    :keymaps 'emacs-lisp-mode-map
+    "x" '(macrostep-expand :wk "expand")
+    "X" '(macrostep-collapse-all :wk "collapse")))
+#+END_SRC
+*** =flycheck-package=
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-package
+  :after flycheck
+  :demand t
+  :config
+  (setq-default
+   flycheck-emacs-lisp-initialize-packages t
+   flycheck-emacs-lisp-load-path load-path)
+  (flycheck-package-setup))
+#+END_SRC
+*** =package-lint=
+#+BEGIN_SRC emacs-lisp
+(use-package package-lint)
+#+END_SRC
+
+** =json-mode=
+#+begin_src emacs-lisp
+(use-package json-mode)
+#+end_src
+** =yaml-mode=
+#+begin_src emacs-lisp
+(use-package yaml-mode)
+#+end_src
+* Inbox
+** =smartparens=
+#+begin_src emacs-lisp
+(use-package smartparens)
+(use-package smartparens-config)
+#+end_src
+
+** =rainbow-delimiters=
+#+begin_src emacs-lisp
+(use-package rainbow-delimiters)
+#+end_src
+
+** Parenthesis
+Highlight matching parenthesis.
+#+BEGIN_SRC emacs-lisp
+(use-package paren
+  :init (show-paren-mode)
+  :config
+  (setq-default show-paren-delay 0
+		show-paren-highlight-openparen t
+		show-paren-when-point-inside-paren t))
+#+END_SRC
+
+Colorize different paren depths.
+#+BEGIN_SRC emacs-lisp
+(use-package rainbow-delimiters
+  :init
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+#+END_SRC
+
+** =format-all=
+#+begin_src emacs-lisp
+(use-package format-all
+  ;; :general
+  ;; (tmacs/bind-leader
+  ;;   "ef" '(format-all-buffer :wk "format"))
+  :preface
+  (defun my-after-change-major-mode ()
+    (format-all-mode
+     (if (and (buffer-file-name)
+              (member major-mode '(c-mode 
+                                   nix-mode 
+                                   terraform-mode
+                                   js-mode
+                                   js2-mode
+                                   js2-js-mode
+                                   )))
+         1 
+       0)))
+  :init
+  (add-hook 'after-change-major-mode-hook 'my-after-change-major-mode))
+#+end_src
+
+** =smex=
+#+begin_src emacs-lisp
+(use-package smex)
+#+end_src
+
+** =ivy-hydra=
+#+begin_src emacs-lisp
+(use-package ivy-hydra)
+#+end_src
+
+** =rg=
+#+begin_src emacs-lisp
+(use-package rg)
+#+end_src
