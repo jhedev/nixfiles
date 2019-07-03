@@ -4,5 +4,6 @@ with lib; {
   imports = [
     ./common/default.nix
     ./emacs/default.nix
+    ./exwm/default.nix
   ];
 }

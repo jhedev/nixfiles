@@ -14,6 +14,7 @@ in {
   tnix.home = {
     common.enable = true;
     emacs.enable = true;
+    exwm.enable = true;
   };
 
   home.packages = with pkgs; [
