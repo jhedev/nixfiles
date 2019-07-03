@@ -8,5 +8,6 @@ with lib; {
     ./git/default.nix
     ./urxvt/default.nix
     ./vim/default.nix
+    ./zsh/default.nix
   ];
 }
