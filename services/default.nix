@@ -9,5 +9,6 @@ with lib; {
     ./homeManager/default.nix
     ./programs/default.nix
     ./users/default.nix
+    ./sound/default.nix
   ];
 }

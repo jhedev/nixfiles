@@ -8,6 +8,14 @@ in {
     <home-manager/nixos>
   ];
 
+  # fix sound
+  boot.extraModprobeConfig = ''
+    options libata.force=noncq
+    options snd_hda_intel index=0 model=intel-mac-auto id=PCH
+    options snd_hda_intel index=1 model=intel-mac-auto id=HDMI
+    options snd_hda_intel model=mbp101
+  '';
+
   tnix.services = {
     autorandr.enable = true;
     common.enable = true;
@@ -18,6 +26,7 @@ in {
     user.enable = true;
     user.name = "tjdev";
     programs.enable = true;
+    sound.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
