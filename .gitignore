@@ -1,0 +1,4 @@
+result
+/hosts/current/
+.env
+/secrets.nix
