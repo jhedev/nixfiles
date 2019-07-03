@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: tnix-home-module
+# key: tnix-home-module
+# --
+{ config, lib, pkgs, ... }:
+
+with lib;
+
+let
+  cfg = config.tnix.home.${1:module};
+in {
+  options.tnix.home.$1.enable = mkEnableOption "${2:Enable some feature.}";
+  config = mkIf cfg.enable {
+    $0
+  };
+}

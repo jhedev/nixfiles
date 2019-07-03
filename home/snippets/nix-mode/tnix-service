@@ -1,0 +1,16 @@
+# -*- mode: snippet -*-
+# name: tnix-service
+# key: tnix-service
+# --
+{ config, lib, pkgs, ... }:
+
+with lib;
+
+let
+  cfg = config.tnix.services.${1:service};
+in {
+  options.tnix.services.$1.enable = mkEnableOption "${2:Enable some system-wide service.}";
+  config = mkIf cfg.enable {
+    $0
+  };
+}
