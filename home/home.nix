@@ -15,6 +15,9 @@ in {
     common.enable = true;
     emacs.enable = true;
     exwm.enable = true;
+    git.enable = true;
+    git.userName = "tobjaw";
+    git.userEmail = "tobjaw@gmail.com";
   };
 
   home.packages = with pkgs; [
