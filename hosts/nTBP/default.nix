@@ -28,6 +28,8 @@ in {
     programs.enable = true;
     sound.enable = true;
     tty.enable = true;
+    x11.enable = true;
+    x11.autorun = true;
     wireguard.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
@@ -44,4 +46,48 @@ in {
   services.xserver.libinput.enable = true;
   services.xserver.libinput.tapping = false;
   services.xserver.videoDrivers = [ "intel" ];
+
+  services.xserver.xrandrHeads = [
+    {
+      output = "eDP1";
+      monitorConfig = ''
+        DisplaySize 286 179
+      '';
+    }
+    {
+      output = "HDMI2";
+      monitorConfig = ''
+        DisplaySize 598 336
+      '';
+    }
+  ];
+  services.xserver.resolutions = [
+    {
+      x = 2560;
+      y = 1600;
+    }
+    {
+      x = 2560;
+      y = 1440;
+    }
+  ];
+
+  programs.light.enable = true;
+  services.actkbd = {
+    enable = true;
+    bindings = [
+      {
+        keys = [ 225 ];
+        events = [ "key" "rep" ];
+        command = "/run/current-system/sw/bin/light -A 0.1";
+      }
+      {
+        keys = [ 224 ];
+        events = [ "key" "rep" ];
+        command = "/run/current-system/sw/bin/light -U 0.1";
+      }
+
+    ];
+  };
+
 }
