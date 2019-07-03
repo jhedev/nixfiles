@@ -6,5 +6,6 @@ with lib; {
     ./common/default.nix
     ./emacs/default.nix
     ./fonts/default.nix
+    ./homeManager/default.nix
   ];
 }

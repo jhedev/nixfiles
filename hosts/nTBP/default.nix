@@ -5,6 +5,7 @@ in {
   imports = [
     <nixos-hardware/apple/macbook-pro/12-1>
     ../../services/default.nix
+    <home-manager/nixos>
   ];
 
   tnix.services = {
@@ -13,6 +14,7 @@ in {
     common.offline = false;
     emacs.enable = true;
     fonts.enable = true;
+    homeManager.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
