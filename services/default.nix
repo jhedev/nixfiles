@@ -8,6 +8,7 @@ with lib; {
     ./fonts/default.nix
     ./homeManager/default.nix
     ./programs/default.nix
+    ./tty/default.nix
     ./users/default.nix
     ./sound/default.nix
   ];

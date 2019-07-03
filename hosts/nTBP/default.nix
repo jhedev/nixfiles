@@ -27,6 +27,7 @@ in {
     user.name = "tjdev";
     programs.enable = true;
     sound.enable = true;
+    tty.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
