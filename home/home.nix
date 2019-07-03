@@ -18,6 +18,7 @@ in {
     git.enable = true;
     git.userName = "tobjaw";
     git.userEmail = "tobjaw@gmail.com";
+    urxvt.enable = true;
   };
 
   home.packages = with pkgs; [
