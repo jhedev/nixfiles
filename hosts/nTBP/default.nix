@@ -2,6 +2,7 @@
 
 let meta = import ../../hosts/current/meta.nix;
 in {
+
   imports = [
     <nixos-hardware/apple/macbook-pro/12-1>
     ../../services/default.nix
@@ -32,6 +33,7 @@ in {
     x11.autorun = true;
     wireguard.enable = true;
   };
+
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
@@ -89,5 +91,6 @@ in {
 
     ];
   };
+
 
 }
