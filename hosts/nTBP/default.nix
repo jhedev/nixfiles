@@ -4,8 +4,11 @@ let meta = import ../../hosts/current/meta.nix;
 in {
   imports = [
     <nixos-hardware/apple/macbook-pro/12-1>
+    ../../services/default.nix
   ];
 
+  tnix.services = {
+  };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   boot.supportedFilesystems = [ "zfs" ];
