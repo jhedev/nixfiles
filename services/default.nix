@@ -5,5 +5,6 @@ with lib; {
     ./autorandr/default.nix
     ./common/default.nix
     ./emacs/default.nix
+    ./fonts/default.nix
   ];
 }
