@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+HOST=${HOST:-$(hostname)}
+CMD="${1:-load}"
+NIXFILES=/etc/nixos
+
+function printusage() {
+    echo -e "\n\tUsage: HOST=[HOSTNAME] $0 [help | load | stage | switch | rollback | offline | update | pkg search]"
+}
+
+if [ "${HOST}" == "nixos" ]; then
+	echo "No host selected."
+	printusage
+	exit 1
+fi
+
+function setuphost() {
+    echo "Setup ${HOST}...";
+(cat <<EOF
+# this file has been automatically generated, do not edit.
+{
+  hostName = "$(hostname)";
+  product_family = "$(cat /sys/class/dmi/id/product_family)";
+  product_name = "$(cat /sys/class/dmi/id/product_name)";
+  vm_guest = $(grep -q ^flags.*\ hypervisor /proc/cpuinfo && echo true || echo false);
+}
+EOF
+) > ${NIXFILES}/hosts/current/meta.nix
+   cat ${NIXFILES}/hosts/current/meta.nix
+   mkdir -p "${NIXFILES}/hosts/current"
+   rm -f "${NIXFILES}/hosts/current/default.nix" || true
+   rm -f "${NIXFILES}/hosts/current/hardware-configuration.nix" || true
+   ln -s "${NIXFILES}/hosts/${HOST}/default.nix" /etc/nixos/hosts/current/default.nix
+   ln -s "${NIXFILES}/hosts/${HOST}/hardware-configuration.nix" /etc/nixos/hosts/current/hardware-configuration.nix
+}
+
+
+cd "${NIXFILES}"
+
+if [ "${CMD}" == "help" ]; then
+    printusage
+elif [ "${CMD}" == "load" ]; then
+    # load new config
+    sudo nixos-rebuild test --fast
+elif [ "${CMD}" == "stage" ]; then
+    # load new config & save staging profile
+    setuphost
+    sudo nixos-rebuild switch -p staging
+    sudo nix-env --delete-generations +1 --profile /nix/var/nix/profiles/system-profiles/staging
+elif [ "${CMD}" == "switch" ]; then
+    # load new config & save system profile
+    setuphost
+    sudo nixos-rebuild switch
+elif [ "${CMD}" == "rollback" ]; then
+    # load last system config & save to current
+    sudo nixos-rebuild switch --rollback
+elif [ "${CMD}" == "offline" ]; then
+    # prepare going offline by retaining build src
+    nix-store -qR $(nix-instantiate "<nixpkgs/nixos>" -A system) | xargs nix-store -r
+    nix-store -qR ~/.nix-profile |xargs nix-store -r
+    sudo nix-store -qR /root/.nix-profile |xargs nix-store -r
+elif [ "${CMD}" == "update" ]; then
+    # update channels
+    sudo nix-channel --update
+elif [ "${CMD}" == "gc" ]; then
+    # TODO: garbage collect
+    exit 1
+    # sudo nix-channel --update
+elif [ "${CMD}" == "pkg" ]; then
+    if [ "${2}" == "search" ]; then
+	# search
+	nix-env -qaP '.*'$3'.*'
+    else
+	printusage;
+    fi
+else
+    echo "Invalid Command."
+    printusage
+    exit 1
+fi
