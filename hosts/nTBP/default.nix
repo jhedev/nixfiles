@@ -15,6 +15,8 @@ in {
     emacs.enable = true;
     fonts.enable = true;
     homeManager.enable = true;
+    user.enable = true;
+    user.name = "tjdev";
     programs.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
