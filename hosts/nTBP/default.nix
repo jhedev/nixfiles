@@ -9,6 +9,8 @@ in {
 
   tnix.services = {
     autorandr.enable = true;
+    common.enable = true;
+    common.offline = false;
   };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
