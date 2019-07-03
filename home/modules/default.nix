@@ -7,5 +7,6 @@ with lib; {
     ./exwm/default.nix
     ./git/default.nix
     ./urxvt/default.nix
+    ./vim/default.nix
   ];
 }
