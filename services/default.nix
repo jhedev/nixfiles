@@ -11,5 +11,6 @@ with lib; {
     ./tty/default.nix
     ./users/default.nix
     ./sound/default.nix
+    ./wireguard/default.nix
   ];
 }

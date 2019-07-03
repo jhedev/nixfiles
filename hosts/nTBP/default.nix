@@ -28,6 +28,7 @@ in {
     programs.enable = true;
     sound.enable = true;
     tty.enable = true;
+    wireguard.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
