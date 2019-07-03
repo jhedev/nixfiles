@@ -15,6 +15,7 @@ in {
     emacs.enable = true;
     fonts.enable = true;
     homeManager.enable = true;
+    programs.enable = true;
   };
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
