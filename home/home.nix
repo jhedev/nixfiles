@@ -24,6 +24,11 @@ in {
   };
 
   home.packages = with pkgs; [
+    chromium
+    firefox
+    jq
+    htop
+    ripgrep
     nixfmt
   ];
 
