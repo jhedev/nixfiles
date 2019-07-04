@@ -1612,6 +1612,18 @@ Keep a list of the most recently used files.
     (org-edit-src-save)
     (org-edit-src-exit)))
    #+end_src
+** =org-drill=
+#+begin_src emacs-lisp
+(use-package org-drill
+  :demand t
+  :init
+  (add-to-list 'org-modules 'org-drill)
+  :config
+  (setq org-drill-maximum-duration 15
+        org-drill-use-visible-cloze-face-p t
+        org-drill-add-random-noise-to-intervals-p t
+        org-drill-learn-fraction 0.45))
+#+end_src
 * Project 
 * Major Modes
 ** Nix
