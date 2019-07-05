@@ -27,6 +27,11 @@ in {
       ttyNumber = 5;
     };
 
+    services.physlock = {
+      enable = true;
+      allowAnyUser = true;
+    };
+
     nixpkgs.config.allowUnfree = true;
 
     # build config to /etc/current-nixos-config/
