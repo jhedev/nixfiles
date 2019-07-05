@@ -30,6 +30,7 @@ in {
       SUBSYSTEM=="drm", ACTION=="change", RUN+="${autorandr-wrapper} --fork"
     '';
     home-manager.users.${config.tnix.services.user.name} = {
+      xsession.profileExtra = "${autorandr-wrapper} --fork";
       programs.autorandr.enable = true;
       programs.autorandr.profiles = {
         "internal" = {
