@@ -24,6 +24,7 @@ in {
     emacs.enable = true;
     fonts.enable = true;
     homeManager.enable = true;
+    light.enable = true;
     user.enable = true;
     user.name = "tjdev";
     programs.enable = true;
@@ -73,24 +74,5 @@ in {
       y = 1440;
     }
   ];
-
-  programs.light.enable = true;
-  services.actkbd = {
-    enable = true;
-    bindings = [
-      {
-        keys = [ 225 ];
-        events = [ "key" "rep" ];
-        command = "/run/current-system/sw/bin/light -A 0.1";
-      }
-      {
-        keys = [ 224 ];
-        events = [ "key" "rep" ];
-        command = "/run/current-system/sw/bin/light -U 0.1";
-      }
-
-    ];
-  };
-
 
 }

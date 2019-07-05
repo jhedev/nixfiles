@@ -7,6 +7,7 @@ with lib; {
     ./emacs/default.nix
     ./fonts/default.nix
     ./homeManager/default.nix
+    ./light/default.nix
     ./programs/default.nix
     ./tty/default.nix
     ./users/default.nix
