@@ -5,6 +5,7 @@ with lib; {
     ./common/default.nix
     ./emacs/default.nix
     ./exwm/default.nix
+    ./firefox/default.nix
     ./git/default.nix
     ./urxvt/default.nix
     ./vim/default.nix

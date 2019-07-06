@@ -15,6 +15,7 @@ in {
     common.enable = true;
     emacs.enable = true;
     exwm.enable = true;
+    firefox.enable = true;
     git.enable = true;
     git.userName = "tobjaw";
     git.userEmail = "tobjaw@gmail.com";
@@ -23,13 +24,6 @@ in {
     zsh.enable = true;
   };
 
-  home.packages = with pkgs; [
-    chromium
-    firefox
-    jq
-    htop
-    ripgrep
-    nixfmt
-  ];
+  home.packages = with pkgs; [ chromium jq htop ripgrep nixfmt ];
 
 }
