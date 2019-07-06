@@ -24,7 +24,7 @@ in {
 
     users.users.${cfg.name} = {
       isNormalUser = true;
-      extraGroups = [ "wheel" "dialout" "plugdev" ];
+      extraGroups = [ "wheel" "dialout" "plugdev" "systemd-journal" ];
       shell = pkgs.zsh;
     };
   };
