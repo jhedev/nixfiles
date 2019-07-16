@@ -30,6 +30,7 @@ in {
     programs.enable = true;
     sound.enable = true;
     tty.enable = true;
+    virtualbox.enable = true;
     x11.enable = true;
     x11.autorun = true;
     wireguard.enable = true;
