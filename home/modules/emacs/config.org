@@ -882,7 +882,7 @@ If the error list is visible, hide it.  Otherwise, show it."
    [S-left] 'evil-window-left
    [S-up] 'evil-window-up
    [S-down] 'evil-window-down
-   "M-b" 'ivy-switch-buffer
+   "M-b" 'exwm-workspace-switch-to-buffer
    )
   :init
   (add-hook 'exwm-update-class-hook
