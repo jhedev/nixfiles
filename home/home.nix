@@ -24,6 +24,6 @@ in {
     zsh.enable = true;
   };
 
-  home.packages = with pkgs; [ chromium jq htop ripgrep nixfmt ];
+  home.packages = with pkgs; [ chromium jq htop nixfmt ripgrep unzip ];
 
 }
