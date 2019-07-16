@@ -70,7 +70,7 @@
   ;;     "" nil)
   )
 #+END_SRC
-** evil
+** =evil=
 *** =evil=
 #+BEGIN_SRC emacs-lisp
 (use-package evil
@@ -893,43 +893,43 @@ If the error list is visible, hide it.  Otherwise, show it."
     "Hook run after initialization of exwm.")
   :config
   (setq exwm-workspace-number 10
-	exwm-input-global-keys
-	`(;; 's-r': Reset (to line-mode).
-	  ([?\M-r] . exwm-reset)
-	  ;; 's-w': Switch workspace.
-	  ([?\M-w] . exwm-workspace-switch)
-	  ([?\M-e] . exwm-edit--compose)
-	  ([?\M-\t] . iflipb-next-buffer)
-	  (,(kbd "<XF86AudioRaiseVolume>") . tmacs-desktop-volume-raise)
-	  (,(kbd "<XF86AudioLowerVolume>") . tmacs-desktop-volume-lower)
-	  (,(kbd "<XF86AudioMute>") . tmacs-desktop-volume-mute)
-	  (,(kbd "<S-iso-leftab>") . iflipb-previous-buffer)
-	  ;; 's-&': Launch application.
-	  ([?\s-\s] . (lambda (command)
-			(interactive (list (read-shell-command "$ ")))
-			(start-process-shell-command command nil command)))
-	  ;; 's-N': Switch to certain workspace.
-	  ,@(mapcar (lambda (i)
-		      `(,(kbd (format "M-%d" i)) .
-			(lambda ()
-			  (interactive)
-			  (exwm-workspace-switch-create ,i))))
-		    (number-sequence 0 9))))
+        exwm-input-global-keys
+        `(;; 's-r': Reset (to line-mode).
+          ([?\M-r] . exwm-reset)
+          ;; 's-w': Switch workspace.
+          ([?\M-w] . exwm-workspace-switch)
+          ([?\M-e] . exwm-edit--compose)
+          ([?\M-\t] . iflipb-next-buffer)
+          (,(kbd "<XF86AudioRaiseVolume>") . tmacs-desktop-volume-raise)
+          (,(kbd "<XF86AudioLowerVolume>") . tmacs-desktop-volume-lower)
+          (,(kbd "<XF86AudioMute>") . tmacs-desktop-volume-mute)
+          (,(kbd "<S-iso-leftab>") . iflipb-previous-buffer)
+          ;; 's-&': Launch application.
+          ([?\s-\s] . (lambda (command)
+                        (interactive (list (read-shell-command "$ ")))
+                        (start-process-shell-command command nil command)))
+          ;; 's-N': Switch to certain workspace.
+          ,@(mapcar (lambda (i)
+                      `(,(kbd (format "M-%d" i)) .
+                        (lambda ()
+                          (interactive)
+                          (exwm-workspace-switch-create ,i))))
+                    (number-sequence 0 9))))
   (setq exwm-input-simulation-keys'(
-				    
-				    ;; ([?\C-b] . [left])
-				    
-				    ;; ([?\C-f] . [right])
-				    
-				    ;; ([?\C-p] . [up])
-				    ;; ([?\C-n] . [down])
-				    ([?\C-a] . [home])
-				    ([?\C-e] . [end])
-				    ;; ([?\M-v] . [prior])
-				    ;; ([?\C-v] . [next])
-				    ;; ([?\C-d] . [delete])
-				    ;; ([?\C-k] . [S-end delete])
-				    ))
+                                    
+                                    ;; ([?\C-b] . [left])
+                                    
+                                    ;; ([?\C-f] . [right])
+                                    
+                                    ;; ([?\C-p] . [up])
+                                    ;; ([?\C-n] . [down])
+                                    ([?\C-a] . [home])
+                                    ([?\C-e] . [end])
+                                    ;; ([?\M-v] . [prior])
+                                    ;; ([?\C-v] . [next])
+                                    ;; ([?\C-d] . [delete])
+                                    ;; ([?\C-k] . [S-end delete])
+                                    ))
   (add-to-list 'exwm-input-prefix-keys ?\M-\s)
   (add-to-list 'exwm-input-prefix-keys ?\M-\t)
   (add-to-list 'exwm-input-prefix-keys ?\s-\t)
@@ -944,22 +944,22 @@ If the error list is visible, hide it.  Otherwise, show it."
   (defun tmacs-desktop-volume-raise ()
     "Raise desktop volume."
     (interactive)
-    (start-process-shell-command "tmacs-desktop" 
-				 nil 
-				 (format tmacs--desktop-volume-format-string "1+")))
+    (start-process-shell-command "tmacs-desktop"
+                                 nil 
+                                 (format tmacs--desktop-volume-format-string "1+")))
   (defun tmacs-desktop-volume-lower ()
     "Lower desktop volume."
     (interactive)
     (start-process-shell-command "tmacs-desktop" 
-				 nil 
-				 (format tmacs--desktop-volume-format-string "1-")))
+                                 nil 
+                                 (format tmacs--desktop-volume-format-string "1-")))
   (defun tmacs-desktop-volume-mute ()
     "Mute toggle desktop volume."
     (interactive)
     (start-process-shell-command "tmacs-desktop" 
-				 nil 
-				 "amixer -q set Master toggle; if amixer get Master | grep -Fq '[off]'; then volnoti-show -m; else volnoti-show $(amixer get Master | grep -Po '[0-9]+(?=%)' | tail -1); fi"
-				 ))
+                                 nil 
+                                 "amixer -q set Master toggle; if amixer get Master | grep -Fq '[off]'; then volnoti-show -m; else volnoti-show $(amixer get Master | grep -Po '[0-9]+(?=%)' | tail -1); fi"
+                                 ))
   (defun my/exwm-window-managed ()
     "To be called from exwm-manage-finish-hook."
     (when exwm-class-name
@@ -967,7 +967,7 @@ If the error list is visible, hide it.  Otherwise, show it."
        ;; ((string= exwm-class-name "URxvt")
        ;; 	(call-interactively 'exwm-input-release-keyboard))
        ((string= exwm-class-name "Emacs")
-	(call-interactively 'exwm-input-release-keyboard))))
+        (call-interactively 'exwm-input-release-keyboard))))
     ;; (message "exwm-class-name: %s" exwm-class-name)
     ))
 #+end_src
@@ -1430,7 +1430,7 @@ Keep a list of the most recently used files.
   :config
   (flycheck-add-mode 'proselint 'org-mode)
   (setq-default flycheck-check-syntax-automatically '(save idle-change mode-enabled)
-		flycheck-idle-change-delay 3)
+                flycheck-idle-change-delay 3)
   (define-fringe-bitmap 'my-flycheck-fringe-indicator
     (vector #b00000000
             #b00000000
