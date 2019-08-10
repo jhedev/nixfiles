@@ -3,6 +3,17 @@
 with pkgs;
 with emacsPackagesNg;
 let
+  bookmark-plus = trivialBuild {
+    pname = "bookmark-plus";
+    ename = "bookmark+";
+    version = "0.0.1";
+    src = fetchFromGitHub {
+      owner = "emacsmirror";
+      repo = "bookmark-plus";
+      rev = "f1149b9646785a310e862e70ca891237d3cf2eb6";
+      sha256 = "1x0ic72i2raxgwglnsp9ic162zhivwk4jhw885hjilyf0kx09hfr";
+    };
+  };
   dired-plus = trivialBuild {
     pname = "dired+";
     ename = "dired+";
@@ -181,6 +192,7 @@ in emacsWithPackages (epkgs:
   yasnippet-snippets
   zenburn-theme
 ]) ++ (with epkgs.orgPackages; [ org org-plus-contrib ]) ++ [
+  bookmark-plus
   dired-plus
   doom-modeline
   exwm

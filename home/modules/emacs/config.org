@@ -831,6 +831,11 @@ If the error list is visible, hide it.  Otherwise, show it."
 	      :after
 	      #'elisp-demos-advice-helpful-update))
 #+end_src
+** Bookmarks
+*** =bookmark+=
+#+begin_src emacs-lisp
+(use-package bookmark+)
+#+end_src
 ** Dired
 *** =dired+=
 #+begin_src emacs-lisp
