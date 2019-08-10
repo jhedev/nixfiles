@@ -1261,6 +1261,27 @@ If the universal prefix argument ARG is used then kill the buffer too."
           ("???"    . "#cc9393")))
   (global-hl-todo-mode))
 #+END_SRC
+** =ui-hydra=
+#+begin_src emacs-lisp
+(use-package ui-hydra
+  :general
+  (tmacs/bind-leader
+    "u" '(ui-hydra/body :wk "UI"))
+  :config
+  (setq ui-hydra-theme-default 'dark
+        ui-hydra-font-height-default 100
+        ui-hydra-theme-auto-mode nil
+        ui-hydra-font-selected "DejaVu Sans Mono for Powerline"
+        ui-hydra-font-enabled-list '("DejaVu Sans Mono for Powerline"
+                                     "Droid Sans Mono for Powerline"
+                                     "Consolas"
+                                     "Iosevka"
+                                     "Hack"
+                                     "Fira Mono for Powerline"
+                                     "IBM Plex Mono"
+                                     "Office Code Pro D"
+                                     "Source Code Variable")))
+#+end_src
 * Editing
 ** Defaults
 #+begin_src emacs-lisp

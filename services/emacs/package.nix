@@ -114,6 +114,17 @@ let
       sha256 = "0syazkswcdf9wv561nlfr9zx32hfwh9mjlbjrqhb5g6l5367f81b";
     };
   };
+  ui-hydra = melpaBuild {
+    pname = "ui-hydra";
+    ename = "ui-hydra";
+    version = "0.0.1";
+    packageRequires = [ dash hydra ];
+    src = /data/dev/ui-hydra;
+    recipe = builtins.toFile "recipe" ''
+      (ui-hydra :repo "tobjaw/ui-hydra"
+                :fetcher github)
+    '';
+  };
   xelb = melpaBuild {
     pname = "xelb";
     ename = "xelb";
@@ -200,6 +211,7 @@ in emacsWithPackages (epkgs:
   fast-scroll
   format-all
   move-border
+  ui-hydra
   xelb
   (runCommand "default.el" { } ''
     mkdir -p $out/share/emacs/site-lisp
