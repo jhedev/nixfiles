@@ -13,6 +13,7 @@ in {
 
   tnix.home = {
     common.enable = true;
+    direnv.enable = true;
     emacs.enable = true;
     exwm.enable = true;
     firefox.enable = true;

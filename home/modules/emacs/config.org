@@ -1629,6 +1629,13 @@ Keep a list of the most recently used files.
         org-drill-learn-fraction 0.45))
 #+end_src
 * Project 
+** =direnv=
+#+begin_src emacs-lisp
+(use-package direnv
+  :demand
+  :config
+  (direnv-mode))
+#+end_src
 * Major Modes
 ** Nix
 *** =nix-mode=

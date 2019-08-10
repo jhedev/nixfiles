@@ -111,6 +111,7 @@ in emacsWithPackages (epkgs:
   counsel-projectile
   dash
   diff-hl
+  direnv
   elisp-demos
   evil
   evil-collection
