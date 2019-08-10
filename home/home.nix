@@ -20,6 +20,7 @@ in {
     git.enable = true;
     git.userName = "tobjaw";
     git.userEmail = "tobjaw@gmail.com";
+    lorri.enable = true;
     urxvt.enable = true;
     vim.enable = true;
     zsh.enable = true;
