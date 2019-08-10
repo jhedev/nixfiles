@@ -15,18 +15,18 @@ in {
         {
           keys = [ 225 ];
           events = [ "key" "rep" ];
-          command = "${light} -A 0.1";
+          command = "${light} -A 0.25";
         }
         {
           keys = [ 224 ];
           events = [ "key" "rep" ];
-          command = "${light} -U 0.1";
+          command = "${light} -U 0.25";
         }
 
       ];
     };
     home-manager.users.${config.tnix.services.user.name} = {
-      xsession.profileExtra = "sudo ${light} -S 19";
+      xsession.profileExtra = "sudo ${light} -S 25";
     };
     security.sudo.extraConfig = ''
       %wheel ALL=(ALL:ALL) NOPASSWD: /run/current-system/sw/bin/light
