@@ -42,6 +42,11 @@ in {
   boot.kernelParams = [ "hid_apple.swap_opt_cmd=1" ];
 
   services.mbpfan.enable = !meta.vm_guest;
+  services.mbpfan.minFanSpeed = 1299;
+  services.mbpfan.maxFanSpeed = 6199;
+  services.mbpfan.lowTemp = 45;
+  services.mbpfan.highTemp = 60;
+  services.mbpfan.maxTemp = 90;
 
   networking.hostId = "c79265a0";
   networking.hostName = meta.hostName;
