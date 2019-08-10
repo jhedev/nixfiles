@@ -46,6 +46,7 @@ in {
   networking.hostId = "c79265a0";
   networking.hostName = meta.hostName;
   networking.wireless.enable = true;
+  virtualisation.docker.enable = true;
 
   services.xserver.libinput.enable = true;
   services.xserver.libinput.tapping = false;
