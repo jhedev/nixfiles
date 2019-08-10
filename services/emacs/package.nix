@@ -3,6 +3,15 @@
 with pkgs;
 with emacsPackagesNg;
 let
+  dired-plus = trivialBuild {
+    pname = "dired+";
+    ename = "dired+";
+    version = "0.0.1";
+    src = fetchurl {
+      url = "https://www.emacswiki.org/emacs/download/dired+.el";
+      sha256 = "08nm06x7k90hhsa7zs733nny6sd6r4k91qm1znbyvkci0da7i1is";
+    };
+  };
   doom-modeline = melpaBuild {
     pname = "doom-modeline";
     ename = "doom-modeline";
@@ -172,6 +181,7 @@ in emacsWithPackages (epkgs:
   yasnippet-snippets
   zenburn-theme
 ]) ++ (with epkgs.orgPackages; [ org org-plus-contrib ]) ++ [
+  dired-plus
   doom-modeline
   exwm
   exwm-edit

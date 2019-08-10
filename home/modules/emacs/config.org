@@ -831,6 +831,15 @@ If the error list is visible, hide it.  Otherwise, show it."
 	      :after
 	      #'elisp-demos-advice-helpful-update))
 #+end_src
+** Dired
+*** =dired+=
+#+begin_src emacs-lisp
+(use-package dired+
+  :general
+  (tmacs-bind-leader-local
+    :keymaps 'dired-mode-map
+    "?" '(diredp-dired-plus-help :wk "help")))
+#+end_src
 * UI
 ** Defaults
 #+begin_src emacs-lisp
