@@ -1488,6 +1488,13 @@ Keep a list of the most recently used files.
   :after yasnippet)
 #+end_src
 
+*** =company-yasnippet=
+#+begin_src emacs-lisp
+(use-package company-yasnippet
+  :after company
+  :init
+  (add-to-list 'company-backends 'company-yasnippet))
+#+end_src
 ** Version Control
 *** =magit=
 #+begin_src emacs-lisp
