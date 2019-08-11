@@ -121,6 +121,7 @@ in emacsWithPackages (epkgs:
   evil-surround
   flycheck
   flycheck-package
+  flycheck-pos-tip
   git-timemachine
   general
   golden-ratio

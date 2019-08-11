@@ -1434,6 +1434,7 @@ Keep a list of the most recently used files.
   (add-hook 'org-mode-hook #'flycheck-mode)
   :config
   (flycheck-add-mode 'proselint 'org-mode)
+  (flycheck-pos-tip-mode)
   (setq-default flycheck-check-syntax-automatically '(save idle-change mode-enabled)
                 flycheck-idle-change-delay 3)
   (define-fringe-bitmap 'my-flycheck-fringe-indicator
