@@ -130,6 +130,7 @@ in emacsWithPackages (epkgs:
   iflipb
   ivy
   ivy-hydra
+  js2-mode
   json-mode
   lispyville
   magit
@@ -146,6 +147,7 @@ in emacsWithPackages (epkgs:
   rainbow-delimiters
   restart-emacs
   rg
+  rjsx-mode
   smartparens
   smex
   swiper

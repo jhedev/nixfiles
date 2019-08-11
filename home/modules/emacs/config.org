@@ -1808,6 +1808,29 @@ Keep a list of the most recently used files.
 #+begin_src emacs-lisp
 (use-package yaml-mode)
 #+end_src
+** JS
+*** =js2-mode=
+#+begin_src emacs-lisp
+(use-package js2-mode
+  :after flycheck
+  :init
+  (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  ;; Required to make imenu functions work correctly
+  (add-hook 'js2-mode-hook 'js2-imenu-extras-mode)
+  :config
+  (setq-default js2-mode-show-parse-errors nil)
+  (setq-default js2-mode-show-strict-warnings nil)
+  (setq-default flycheck-disabled-checkers
+                (append flycheck-disabled-checkers
+                        '(javascript-jshint
+                          javascript-jscs
+                          javascript-standard)))
+  (add-to-list 'org-src-lang-modes '("js" . js2)))
+#+end_src
+*** =rjsx-mode=
+#+begin_src emacs-lisp
+(use-package rjsx-mode)
+#+end_src
 * Inbox
 ** =smartparens=
 #+begin_src emacs-lisp
