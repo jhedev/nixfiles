@@ -52,6 +52,18 @@ let
       sha256 = "0y1pqsz2m3c7lwzcnapc9605jyc6bxkynahq3sbz17sxdnxm5q6s";
     };
   };
+  fast-scroll = trivialBuild {
+    pname = "fast-scroll";
+    ename = "fast-scroll";
+    version = "0.0.1";
+    packageRequires = [ evil ];
+    src = fetchFromGitHub {
+      owner = "tobjaw";
+      repo = "fast-scroll";
+      rev = "52f7a246acd80ef67a379728cb77c9b9f0a4a4ea";
+      sha256 = "1bzzfmz4z6wvgc4r2vzsadfiaiy9l0pdf91wj6idb50knic228g5";
+    };
+  };
   format-all = melpaBuild {
     pname = "format-all";
     ename = "format-all";
@@ -163,6 +175,7 @@ in emacsWithPackages (epkgs:
   doom-modeline
   exwm
   exwm-edit
+  fast-scroll
   format-all
   move-border
   xelb
