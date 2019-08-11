@@ -314,11 +314,12 @@ If WINDOW is set, use different window than the current."
   :after flycheck
   :general
   (tmacs-bind-leader
+    "e" '(:ignore t :wk "edit/error")
+    "e ESC" '(redraw-display :wk "ESC")
     "el" '(tmacs-error-list-toggle :wk "list errors")
-    "El" '(tmacs-error-list-toggle :wk "list")
-    "En" '(flycheck-next-error :wk "next")
-    "Ep" '(flycheck-previous-error :wk "previous")
-    "Ev" '(flycheck-verify-setup :wk "verify")
+    "en" '(flycheck-next-error :wk "next")
+    "ep" '(flycheck-previous-error :wk "previous")
+    "ev" '(flycheck-verify-setup :wk "verify")
     "ea SPC" '(tmacs-edit-align-whitespace :wk "SPC")
     "ea&" '(tmacs-edit-align-& :wk "&")
     "ea," '(tmacs-edit-align-comma :wk ",")
@@ -475,6 +476,8 @@ If the error list is visible, hide it.  Otherwise, show it."
   :after yasnippet
   :general
   (tmacs/bind-leader
+    "i" '(:ignore t :wk "insert")
+    "i ESC" '(redraw-display :wk "ESC")
     "is" '(yas-insert-snippet :wk "snippet")
     "iS$" '(yas-reload-all :wk "invalidate cache")
     "iSe" '(yas-visit-snippet-file :wk "edit")
@@ -485,6 +488,8 @@ If the error list is visible, hide it.  Otherwise, show it."
 (use-package emacs
   :general
   (tmacs/bind-leader
+    "m" '(:ignore t :wk "mode")
+    "m ESC" '(redraw-display :wk "ESC")
     "me" '(emacs-lisp-mode :wk "elisp")
     "mo" '(org-mode :wk "org")
     "mf" '(fundamental-mode :wk "fundamental")
@@ -554,7 +559,8 @@ If the error list is visible, hide it.  Otherwise, show it."
   :general
   (tmacs-bind-leader
     "p" '(:ignore t :wk "project")
-    "p:" '(projectile-run-eshell :wk "shell")
+    "p(" '(projectile-run-eshell :wk "shell")
+    ;; TODO: p: open URxvt<$PROJECT>
     "pc" '(projectile-compile-project :wk "compile")
     "pC" '(projectile-configure-project :wk "configure")
     "pD" '(projectile-kill-buffers :wk "delete")
@@ -722,10 +728,9 @@ If the error list is visible, hide it.  Otherwise, show it."
   (tmacs-bind-leader
     "q" '(:ignore t :wk "quit")
     "q ESC" '(redraw-display :wk t)
-    ;; "qr" '(tmacs-quit-emacs :wk "restart")
-    "qR" '(tmacs-quit-reboot :wk "Reboot")
-    "qq" '(tmacs-quit-emacs :wk "quit")
-    "qQ" '(tmacs-quit-shutdown :wk "Quit"))
+    "qR" '(tmacs-quit-reboot :wk "reboot")
+    "qq" '(tmacs-quit-emacs :wk "quit xsession")
+    "qQ" '(tmacs-quit-shutdown :wk "shutdown"))
   :preface
   (defun tmacs-quit-emacs ()
     "Prompt to save changed buffers and exit Emacs."
