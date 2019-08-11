@@ -1544,6 +1544,7 @@ Keep a list of the most recently used files.
   :init
   (add-hook 'magit-log-mode-hook #'evil-normalize-keymaps)
   :config
+  (transient-bind-q-to-quit)
   (defun tmacs/magit-rebase-split-commit-do ()
     (remove-hook 'magit-post-refresh-hook 'tmacs/magit-rebase-split-commit-do t)
     (magit-reset-head "HEAD^"))
