@@ -1680,11 +1680,8 @@ Keep a list of the most recently used files.
 #+begin_src emacs-lisp
 (use-package company-nixos-options
   :after company
-  :demand
-  :config
-  ;; FIXME: Company: backend company-nixos-options error "Wrong type argument: stringp, nil" with args (prefix)
-  ;; (add-to-list 'company-backends 'company-nixos-options)
-  )
+  :init
+  (add-to-list 'company-backends 'company-nixos-options))
 #+end_src
 ** Lisp
 *** General
