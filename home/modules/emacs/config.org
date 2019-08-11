@@ -1719,6 +1719,13 @@ Keep a list of the most recently used files.
                        sql-mode-hook))
     (add-hook mode-hook #'aggressive-indent-mode)))
 #+END_SRC
+*** Company
+#+begin_src emacs-lisp
+(use-package company-elisp
+  :after company
+  :init
+  (add-to-list 'company-backends 'company-elisp))
+#+end_src
 *** Custom Indent
 #+BEGIN_SRC emacs-lisp
 ;; https://github.com/Fuco1/.emacs.d/blob/af82072196564fa57726bdbabf97f1d35c43b7f7/site-lisp/redef.el#L20-L94
