@@ -1628,6 +1628,24 @@ Keep a list of the most recently used files.
         org-drill-add-random-noise-to-intervals-p t
         org-drill-learn-fraction 0.45))
 #+end_src
+** =org-babel=
+#+begin_src emacs-lisp
+(use-package ob
+  :config
+  (setq org-confirm-babel-evaluate nil)
+  :init
+  (org-babel-do-load-languages 'org-babel-load-languages
+                               '((awk . t)
+                                 (calc .t)
+                                 (C . t)
+                                 (js . t)
+                                 (latex . t)
+                                 (ditaa . t)
+                                 (emacs-lisp . t)
+                                 (shell . t)
+                                 (plantuml . t)
+                                 (R . t))))
+#+end_src
 * Project 
 ** =direnv=
 #+begin_src emacs-lisp
