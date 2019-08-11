@@ -116,11 +116,11 @@
    :keymaps '(magit-status-mode-map magit-mode-map)
    :states 'normal
    "q" 'magit-mode-bury-buffer)
-  (tmacs/bind
+  (tmacs-bind
    :keymaps '(magit-status-mode-map 
-	      magit-mode-map 
-	      magit-diff-mode-map 
-	      magit-blame-mode-map)
+              magit-mode-map 
+              magit-diff-mode-map 
+              magit-blame-mode-map)
    "<M-tab>" nil
    "M-1" nil
    "M-2" nil
@@ -1007,15 +1007,15 @@ If the error list is visible, hide it.  Otherwise, show it."
   :preface
   (defun tmacs-ediff-comparison-buffer-p ()
     (and (boundp 'ediff-this-buffer-ediff-sessions)
-	 ediff-this-buffer-ediff-sessions))
+         ediff-this-buffer-ediff-sessions))
   :config
   (add-to-list 'golden-ratio-exclude-modes "ediff-mode")
   (add-to-list 'golden-ratio-inhibit-functions 'tmacs-ediff-comparison-buffer-p)
   (setq golden-ratio-extra-commands '(evil-window-left 
-				      evil-window-up 
-				      evil-window-right 
-				      evil-window-down))
-  (setq golden-ratio-auto-scale t)
+                                      evil-window-up 
+                                      evil-window-right 
+                                      evil-window-down)
+        golden-ratio-auto-scale t)
   (golden-ratio-mode 1))
 #+END_SRC
 *** =move-border=
